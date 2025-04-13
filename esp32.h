@@ -108,7 +108,7 @@
   #define SYS_STATUS_LED_PIN  13
 
   // this it not nice, should be cleaned up
- 	/* Original OS30 pin defines */
+ 	/* Original OS30 pin defines  - native definitions, should not be here
 	//#define V0_MAIN_INPUTMASK 0b00001010 // main input pin mask
 	// pins on main PCF8574 IO expander have pin numbers IOEXP_PIN+i
 	#define V0_PIN_BUTTON_1      IOEXP_PIN+1 // button 1
@@ -122,8 +122,8 @@
 	#define V0_PIN_BOOST_EN      IOEXP_PIN+7
 	#define V0_PIN_SENSOR1       12 // sensor 1
 	#define V0_PIN_SENSOR2       13 // sensor 2
-
-	/* OS31 pin defines */
+*/
+	/* OS31 pin defines - native definitions, should not be here
 	// pins on PCA9555A IO expander have pin numbers IOEXP_PIN+i
 	#define V1_IO_CONFIG         0x1F00 // config bits
 	#define V1_IO_OUTPUT         0x1F00 // output bits
@@ -138,9 +138,10 @@
 	#define V1_PIN_LATCH_COM     IOEXP_PIN+15
 	#define V1_PIN_SENSOR1       IOEXP_PIN+8 // sensor 1
 	#define V1_PIN_SENSOR2       IOEXP_PIN+9 // sensor 2
-
-	/* OS32 pin defines */
+*/
+	/* OS32 pin defines  - native definitions, should not be here
 	// pins on PCA9555A IO expander have pin numbers IOEXP_PIN+i
+
 	#define V2_IO_CONFIG         0x1000 // config bits
 	#define V2_IO_OUTPUT         0x1E00 // output bits
 	#define V2_PIN_BUTTON_1      2 // button 1
@@ -156,6 +157,11 @@
 	#define V2_PIN_LATCH_COMK    IOEXP_PIN+15 // latch COM- (cathode)
 	#define V2_PIN_SENSOR1       3  // sensor 1
 	#define V2_PIN_SENSOR2       10 // sensor 2
+*/
 
+  /* these should be cleaned up */
+  #define V2_PIN_SRLAT         IOEXP_PIN+9  // shift register latch
+	#define V2_PIN_SRCLK         IOEXP_PIN+10 // shift register clock
+	#define V2_PIN_SRDAT         IOEXP_PIN+11 // shift register data
 #endif
 #endif //_ESP32_H
