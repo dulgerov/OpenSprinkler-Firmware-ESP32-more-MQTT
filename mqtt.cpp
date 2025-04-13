@@ -27,6 +27,7 @@
 		#include <ESP8266WiFi.h>
 	#elif defined(ESP32)
 		// no wired ethernet support
+		#include <Wifi.h>
 	#else
 		#include <Ethernet.h>
 	#endif
@@ -125,7 +126,7 @@ boolean checkPassword(char* pw) {
 //handles /cv command
 void changeValues(char *message){
 	DEBUG_LOGF("Changing Values\r\n");
-	#if defined(ESP8266)
+	#if defined(ESP8266) || defined(ESP32)
 		extern uint32_t reboot_timer;
 	#endif
 
@@ -136,7 +137,7 @@ void changeValues(char *message){
 
 	if(findKeyVal(message, tmp_buffer, TMP_BUFFER_SIZE, PSTR("rbt"), true)){
 		DEBUG_LOGF("Rebooting\r\n");
-		#if defined(ESP8266)
+		#if defined(ESP8266) || defined(ESP32)
 			os.status.safe_reboot = 0;
 			reboot_timer = os.now_tz() + 1;
 		#else
