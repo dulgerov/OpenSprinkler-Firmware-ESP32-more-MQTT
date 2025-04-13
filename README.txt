@@ -32,9 +32,9 @@ Know limitation
 5. you may have a problem with a relay board as in most cases 5V is needed. However you may shortcut the led diode and this allowed to drive optoisolators correctly with 3,3V signal however to make a relay coils trigel you need power board with 5V JVCC pin !!!
 6. SPIFFS partion formating is not tested and may not work. If not... compile and upload any ESP32 SPIFF exampel skech... 
 
-============================================
-==== OpenSprinkler AVR/RPI/BBB Firmware ====
-============================================
+========================================
+==== OpenSprinkler Unified Firmware ====
+========================================
 
 This is a unified OpenSprinkler firmware for Arduino, and Linux-based OpenSprinklers such as OpenSprinkler Pi.
 
@@ -45,7 +45,7 @@ Compilation instructions for OS (Arduino-based OpenSprinkler) 2.3 and 3.x:
 Additional details:
 https://openthings.freshdesk.com/support/solutions/articles/5000165132
 
-For OSPi/OSBO or other Linux-based OpenSprinkler:
+For OSPi or other Linux-based OpenSprinkler:
 https://openthings.freshdesk.com/support/solutions/articles/5000631599
 
 ============================================
