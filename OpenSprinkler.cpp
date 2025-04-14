@@ -1132,7 +1132,9 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 #if defined(ESP8266) || defined(ESP32)
 	// OS 3.0 has two independent sensors
 	pinModeExt(PIN_SENSOR1, INPUT_PULLUP);
+	#if defined(ESP8266) || defined(PIN_SENSOR2) || defined(E0_PIN_SENSOR2)
 	pinModeExt(PIN_SENSOR2, INPUT_PULLUP);
+	#endif
 	
 	DEBUG_PRINTLN("Starting sensors - INPUT_PULLUP");
  	DEBUG_PRINT("Sensor1 PIN: "); DEBUG_PRINTLN(PIN_SENSOR1);
@@ -1142,7 +1144,7 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 	digitalWrite(PIN_SR_OE, LOW);
 	// Rain sensor port set up
 	pinMode(PIN_SENSOR1, INPUT_PULLUP);
-	#if defined(PIN_SENSOR2)
+	#if defined(PIN_SENSOR2) || defined(E0_PIN_SENSOR2)
 	pinMode(PIN_SENSOR2, INPUT_PULLUP);
 	#endif
 #endif
@@ -1690,7 +1692,7 @@ void OpenSprinkler::detect_binarysensor_status(time_os_t curr_time) {
 
 // ESP8266 is guaranteed to have sensor 2
 // if your ESP32 board has 2 sensors, then set PIN_SENOR2
-#if defined(ESP8266) || defined(PIN_SENSOR2)
+#if defined(ESP8266) || defined(PIN_SENSOR2) || defined(E0_PIN_SENSOR2)
 	if(iopts[IOPT_SENSOR2_TYPE]==SENSOR_TYPE_RAIN || iopts[IOPT_SENSOR2_TYPE]==SENSOR_TYPE_SOIL) {
 		if(hw_rev>=2)	pinModeExt(PIN_SENSOR2, INPUT_PULLUP); // this seems necessary for OS 3.2
 		unsigned char val = digitalReadExt(PIN_SENSOR2);
@@ -1736,7 +1738,7 @@ unsigned char OpenSprinkler::detect_programswitch_status(time_os_t curr_time) {
 			ret |= 0x01;
 		}
 	}
-#if defined(ESP8266) || defined(PIN_SENSOR2)
+#if defined(ESP8266) || defined(PIN_SENSOR2) || defined(E0_PIN_SENSOR2)
 	if(iopts[IOPT_SENSOR2_TYPE]==SENSOR_TYPE_PSWITCH) {
 		static unsigned char sensor2_hist = 0;
 		if(hw_rev>=2) pinModeExt(PIN_SENSOR2, INPUT_PULLUP); // this seems necessary for OS 3.2
