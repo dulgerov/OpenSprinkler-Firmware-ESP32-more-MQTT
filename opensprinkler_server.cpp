@@ -59,14 +59,6 @@
 		#include "espconnect.h"
 
 		extern WebServer *update_server;
-		
-		// no ethernet support for now
-
-		extern OTF::OpenThingsFramework *otf;
-		#define OTF_PARAMS_DEF const OTF::Request &req,OTF::Response &res
-		#define OTF_PARAMS req,res
-		#define FKV_SOURCE req
-		#define handle_return(x) {if(x==HTML_OK) res.writeBodyChunk((char *)"%s",ether_buffer); else otf_send_result(req,res,x); return;}
 	#else
 		#include "SdFat.h"
 		extern SdFat sd;
@@ -285,7 +277,7 @@ void otf_send_result(OTF_PARAMS_DEF, unsigned char code, const char *item = NULL
 	res.writeBodyChunk((char *)"%s",json.c_str());
 }
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 void update_server_send_result(unsigned char code, const char* item = NULL) {
 	String json = F("{\"result\":");
 	json += code;
@@ -1877,7 +1869,7 @@ void server_json_log(OTF_PARAMS_DEF) {
 #endif // prepare to open log file
 		int result;
 		while(true) {
-		#if defined(ESP8266)
+		#if defined(ESP8266) || defined(ESP32)
 			// do not use file.read_byte or read_byteUntil because it's very slow
 			result = file_fgets(file, tmp_buffer, TMP_BUFFER_SIZE);
 			if (result <= 0) {

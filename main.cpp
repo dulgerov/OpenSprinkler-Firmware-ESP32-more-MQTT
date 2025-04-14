@@ -47,7 +47,6 @@
 	#elif defined(ESP32) // for ESP32 - keep separated
 		//#include <ESP32-ENC28J60.h> // not used/implemented now
 		WebServer *update_server = NULL;
-		OTF::OpenThingsFramework *otf = NULL;
 		DNSServer *dns = NULL;
 		
 		//ENC28J60lwIP enc28j60(PIN_ETHER_CS); // ENC28J60 lwip for wired Ether

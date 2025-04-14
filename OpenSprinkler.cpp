@@ -583,7 +583,7 @@ unsigned char OpenSprinkler::start_network() {
 	DEBUG_PRINTLN(( get_wifi_mode() == WIFI_MODE_STA ) ?  F("STA") : F("AP"));
 	
 	// FIXME, just for testing
-	::start_server_ap();
+	//::start_server_ap();
 
 	if((useEth || get_wifi_mode()==WIFI_MODE_STA) && otc.en>0 && otc.token.length()>=DEFAULT_OTC_TOKEN_LENGTH) {
 		otf = new OTF::OpenThingsFramework(httpport, otc.server, otc.port, otc.token, false, ether_buffer, ETHER_BUFFER_SIZE);
@@ -2203,6 +2203,7 @@ int8_t OpenSprinkler::send_http_request(const char* server, uint16_t port, char*
 		if(usessl) {
 			WiFiClientSecure *_c = new WiFiClientSecure();
 			_c->setInsecure();
+			#if defined(ESP8266)
   		bool mfln = _c->probeMaxFragmentLength(server, port, 512);
   		DEBUG_PRINTF("MFLN supported: %s\n", mfln ? "yes" : "no");
   		if (mfln) {
@@ -2210,6 +2211,7 @@ int8_t OpenSprinkler::send_http_request(const char* server, uint16_t port, char*
 			} else {
 				_c->setBufferSizes(2048, 2048);
 			}
+			#endif
 			client = _c;
 		} else {
 			client = new WiFiClient();

@@ -475,7 +475,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 			if (ifttt_enabled || email_enabled) {
 				#if defined(ARDUINO)
 					snprintf_P(postval+strlen(postval), TMP_BUFFER_SIZE, PSTR("rebooted. Cause: %d. Device IP: "), os.last_reboot_cause);
-					#if defined(ESP8266) || defined(ESP32)
+					#if defined(ESP8266)
 					{
 						IPAddress _ip;
 						if (useEth) {
@@ -487,6 +487,12 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 						unsigned char ip[4] = {_ip[0], _ip[1], _ip[2], _ip[3]};
 						ip2string(postval, TMP_BUFFER_SIZE, ip);
 					}
+					#elif defined(ESP32)
+						// no ETH support for ESP32 now
+						IPAddress _ip;
+						_ip = WiFi.localIP();
+						unsigned char ip[4] = {_ip[0], _ip[1], _ip[2], _ip[3]};
+						ip2string(postval, TMP_BUFFER_SIZE, ip);
 					#else
 						ip2string(postval, TMP_BUFFER_SIZE, &(Ethernet.localIP()[0]));
 					#endif

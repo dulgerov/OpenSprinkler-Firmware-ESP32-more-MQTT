@@ -4,7 +4,7 @@
 #if defined(ESP32)
 
 // this will enable SPIFFS compatiblity => no "real" folders
-//#define CONFIG_LITTLEFS_SPIFFS_COMPAT 1
+//# define CONFIG_LITTLEFS_SPIFFS_COMPAT 1
 
 /** Data file names for esp32 / in filename is needed to work correctly */
 #define IOPTS_FILENAME        "/iopts.dat"   // integer options data file
@@ -19,7 +19,8 @@
 #define ESP32_FORMAT_FS_IF_FAILED true
 
 // chose LCD type: 0.96 probably SSD1306, 1.3" is probably SH1106
-#define LCD_SH1106
+// moved to defines.h
+//#define LCD_SH1106
 //#define LCD_SSD1306
 
 #define MDNS_NAME "opensprinkler" // mDNS name for OS controler
@@ -50,19 +51,19 @@
   #define ETHER_BUFFER_SIZE   8192 // was 8192 
 
   /* To accommodate different OS30 versions, we use software defines pins */ 
-  extern byte PIN_BUTTON_1;
-  extern byte PIN_BUTTON_2;
-  extern byte PIN_BUTTON_3;
-  extern byte PIN_RFRX;
-  extern byte PIN_RFTX;
-  extern byte PIN_BOOST;
-  extern byte PIN_BOOST_EN;
-  extern byte PIN_LATCH_COM;
-  extern byte PIN_LATCH_COMA;
-  extern byte PIN_LATCH_COMK;
-  extern byte PIN_SENSOR1;
-  extern byte PIN_SENSOR2;
-  extern byte PIN_IOEXP_INT;
+  extern unsigned char PIN_BUTTON_1;
+  extern unsigned char PIN_BUTTON_2;
+  extern unsigned char PIN_BUTTON_3;
+  extern unsigned char PIN_RFRX;
+  extern unsigned char PIN_RFTX;
+  extern unsigned char PIN_BOOST;
+  extern unsigned char PIN_BOOST_EN;
+  extern unsigned char PIN_LATCH_COM;
+  extern unsigned char PIN_LATCH_COMA;
+  extern unsigned char PIN_LATCH_COMK;
+  extern unsigned char PIN_SENSOR1;
+  extern unsigned char PIN_SENSOR2;
+  extern unsigned char PIN_IOEXP_INT;
 
 
   #define E0_PIN_BUTTON_1      25 // button 1 - v1pr 18

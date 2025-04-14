@@ -28,6 +28,7 @@
 #include <ESP8266WebServer.h>
 #elif defined(ESP32)
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <WebServer.h>
 #include <ESPmDNS.h>
 #include <Update.h>

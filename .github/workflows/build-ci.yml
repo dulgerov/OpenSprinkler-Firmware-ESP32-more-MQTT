@@ -51,6 +51,20 @@ jobs:
         with:
           name: firmware
           path: ./firmware_os_esp8266.bin
+
+      - name: Build PlatformIO ESP32 Project
+        run: pio run --environment esp32_sprinkler
+
+      - name: Move and rename ESP32 firmware
+        run: mv .pio/build/esp32_sprinkler/firmware.bin ./firmware_os_esp32.bin
+
+      - name: Upload ESP32 firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: ./firmware_os_esp32.bin
+  
+  
   build-demo:
     name: Build Demo
     runs-on: ubuntu-latest
