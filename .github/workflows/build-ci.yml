@@ -103,6 +103,7 @@ jobs:
   build-demo:
     name: Build Demo
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork }} # ${{ needs.build.outputs.stageEnv == 'PROD' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -115,6 +116,7 @@ jobs:
   build-docker:
     name: Build Docker
     runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.head.repo.fork }} # ${{ needs.build.outputs.stageEnv == 'PROD' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

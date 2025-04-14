@@ -3416,7 +3416,7 @@ void OpenSprinkler::ui_set_options(int oid)
 	lcd.noBlink();
 }
 
-#else
+#elif defined(ARDUINO)
 /** user interface for setting options during startup, using the new, paged menu */
 void OpenSprinkler::ui_boot_menu(MenuItem* menuItems, int menuSize)
 {
