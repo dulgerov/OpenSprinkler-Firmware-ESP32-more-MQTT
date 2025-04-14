@@ -12,3 +12,4 @@ OpenSprinkler-Firmware-ESP32.code-workspace
 !build.sh
 !startOpenSprinkler.sh
 !updater.sh
+wokwi.toml

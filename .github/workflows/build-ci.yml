@@ -95,9 +95,10 @@ jobs:
         uses: wokwi/wokwi-ci-action@v1
         with:
           token: ${{ secrets.WOKWI_CLI_TOKEN }}
-          timeout: 180000
+          timeout: 30000
           path: / # directory with wokwi.toml, relative to repo's root
-          expect_text: 'AP started.' # optional
+          expect_text: 'Factory reset'
+          # expect_text: 'AP started.' # this resulted in API Error: Connection to wss://wokwi.com/api/ws/beta closed unexpectedly: code 1006
 
   build-demo:
     name: Build Demo
