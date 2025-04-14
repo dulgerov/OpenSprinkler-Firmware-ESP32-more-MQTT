@@ -53,7 +53,7 @@ jobs:
           path: ./firmware_os_esp8266.bin
   
   build-pio-esp32:
-    name: Build PlatformIO
+    name: Build PlatformIO ESP32
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -77,7 +77,7 @@ jobs:
         run: pip install --upgrade platformio
 
       - name: Build PlatformIO ESP32 Project
-        run: pio run --environment 0
+        run: pio run --environment esp32_sprinkler
 
       - name: Move and rename ESP32 firmware
         run: mv .pio/build/esp32_sprinkler/firmware_merged.bin ./firmware_os_esp32.bin
