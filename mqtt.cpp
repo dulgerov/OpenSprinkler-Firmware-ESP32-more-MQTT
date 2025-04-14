@@ -27,7 +27,7 @@
 		#include <ESP8266WiFi.h>
 	#elif defined(ESP32)
 		// no wired ethernet support
-		#include <Wifi.h>
+		#include <WiFi.h>
 	#else
 		#include <Ethernet.h>
 	#endif
