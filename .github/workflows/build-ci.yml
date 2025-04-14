@@ -51,20 +51,50 @@ jobs:
         with:
           name: firmware
           path: ./firmware_os_esp8266.bin
+  
+  build-pio-esp32:
+    name: Build PlatformIO
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      # - uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.13'
+      - name: Install python
+        run: sudo apt-get install python3 python3-pip
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
 
       - name: Build PlatformIO ESP32 Project
-        run: pio run --environment esp32_sprinkler
+        run: pio run --environment 0
 
       - name: Move and rename ESP32 firmware
-        run: mv .pio/build/esp32_sprinkler/firmware.bin ./firmware_os_esp32.bin
+        run: mv .pio/build/esp32_sprinkler/firmware_merged.bin ./firmware_os_esp32.bin
 
       - name: Upload ESP32 firmware
         uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: firmware_merged.bin
           path: ./firmware_os_esp32.bin
-  
-  
+
+      - name: Test with Wokwi
+        uses: wokwi/wokwi-ci-action@v1
+        with:
+          token: ${{ secrets.WOKWI_CLI_TOKEN }}
+          path: / # directory with wokwi.toml, relative to repo's root
+          expect_text: 'AP started.' # optional
+
   build-demo:
     name: Build Demo
     runs-on: ubuntu-latest
