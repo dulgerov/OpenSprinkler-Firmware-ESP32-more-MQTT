@@ -179,24 +179,28 @@ void ui_state_machine() {
 	}
 #endif
 
+	#if defined(ESP32)
 	// LCD timeout reached
 	if (!os.button_timeout && !os.lcd_dimmed) {
-		#if defined(ESP32)
 		if ( os.get_wifi_mode()==WIFI_MODE_STA ) {
 			os.lcd_set_brightness(0);
 			os.lcd_dimmed = true;
 		}
-		#else
+	}
+	#else
+	if (!os.button_timeout) {
 		os.lcd_set_brightness(0);
-		#endif
 		ui_state = UI_STATE_DEFAULT;  // also recover to default state
 	}
+	#endif
 
 	// read button, if something is pressed, wait till release
 	unsigned char button = os.button_read(BUTTON_WAIT_HOLD);
 
 	if (button & BUTTON_FLAG_DOWN) {  // repond only to button down events
+		#if defined(ESP32)
 		os.lcd_dimmed = false;
+		#endif
 		os.button_timeout = LCD_BACKLIGHT_TIMEOUT;
 		os.lcd_set_brightness(1);
 	} else {

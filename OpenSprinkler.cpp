@@ -1238,7 +1238,7 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 
 	#if defined(ESP8266) || defined(ESP32)
 
-		/* create custom characters */
+		/* create custom wifi icon characters */
 		lcd.createChar(ICON_WIFI_CONNECTED, _iconimage_wifi_connected);
 		lcd.createChar(ICON_WIFI_DISCONNECTED, _iconimage_wifi_disconnected);
 
@@ -1282,10 +1282,12 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 			DEBUG_PRINTLN(F("FAILED."));
 			delay(10000);
 			//reboot_dev(REBOOT_CAUSE_PROGRAM);
+		#if defined(ESP32)
 		} else {
 			ESP32_listDir("/",2);
 			
 			//ESP32_readFile(IOPTS_FILENAME);
+		#endif
 		}
 		DEBUG_PRINTLN(F("Done."));
 		lcd.clear(0,0);
@@ -2865,24 +2867,25 @@ void OpenSprinkler::raindelay_stop() {
 /** LCD and button functions */
 #if defined(USE_DISPLAY)
 #if defined(ARDUINO)		// AVR LCD and button functions
-/** print a program memory string */
-#if defined(ESP8266) || defined(ESP32)
-void OpenSprinkler::lcd_print_pgm(PGM_P str) {
-#else
-void OpenSprinkler::lcd_print_pgm(PGM_P PROGMEM str) {
-#endif
-	uint8_t c;
-	while((c=pgm_read_byte(str++))!= '\0') {
-		lcd.print((char)c);
+	/** print a program memory string */
+	#if defined(ESP8266) || defined(ESP32)
+	void OpenSprinkler::lcd_print_pgm(PGM_P str) {
+	#else
+	void OpenSprinkler::lcd_print_pgm(PGM_P PROGMEM str) {
+	#endif
+		uint8_t c;
+		while((c=pgm_read_byte(str++))!= '\0') {
+			lcd.print((char)c);
+		}
 	}
-}
 
-/** print a program memory string to a given line with clearing */
-#if defined(ESP8266) || defined(ESP32)
-void OpenSprinkler::lcd_print_line_clear_pgm(PGM_P str, unsigned char line) {
-#else
-void OpenSprinkler::lcd_print_line_clear_pgm(PGM_P PROGMEM str, unsigned char line) {
-#endif
+	/** print a program memory string to a given line with clearing */
+	#if defined(ESP8266) || defined(ESP32)
+	void OpenSprinkler::lcd_print_line_clear_pgm(PGM_P str, unsigned char line) {
+	#else
+	void OpenSprinkler::lcd_print_line_clear_pgm(PGM_P PROGMEM str, unsigned char line) {
+	#endif
+
 	lcd.setCursor(0, line);
 	uint8_t c;
 	int8_t cnt = 0;
@@ -2913,7 +2916,7 @@ void OpenSprinkler::lcd_print_line_clear_pgm(const char *str, uint8_t line) {
 }
 
 #define PGSTR(s) s
-#endif
+#endif // end if arduino
 
 void OpenSprinkler::lcd_print_2digit(int v)
 {
@@ -3622,7 +3625,7 @@ void OpenSprinkler::set_screen_led(unsigned char status) {
 
 #endif
 
-#endif
+#endif // end if use_display
 
 #if defined(ESP8266) || defined(ESP32)
 

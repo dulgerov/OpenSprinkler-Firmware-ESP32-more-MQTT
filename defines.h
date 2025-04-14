@@ -446,6 +446,10 @@ enum {
 	#define V2_PIN_LATCH_COMK    IOEXP_PIN+15 // latch COM- (cathode)
 	#define V2_PIN_SENSOR1       3  // sensor 1
 	#define V2_PIN_SENSOR2       10 // sensor 2
+
+	#define USE_DISPLAY
+	#define USE_SSD1306
+	
 #elif defined(ESP32)
 
   	#include "esp32.h"
