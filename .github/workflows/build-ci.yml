@@ -80,7 +80,10 @@ jobs:
         run: pio run --environment esp32_sprinkler
 
       - name: Move and rename ESP32 firmware
-        run: cp .pio/build/esp32_sprinkler/firmware_merged.bin ./firmware_os_esp32.bin
+        run: cp .pio/build/esp32_sprinkler/firmware_merged.bin ./firmware_os_esp32.bin && pwd
+
+      - name: List firmwares
+        run: ls -la . && ls -la .pio/build/esp32_sprinkler/ && pwd
 
       - name: Upload ESP32 firmware
         uses: actions/upload-artifact@v4
