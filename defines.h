@@ -44,10 +44,10 @@ typedef unsigned long ulong;
 #define SIM_HW_VERSION_BASE  0xC0 // simulation hardware
 
 /** Hardware type macro defines */
-#define HW_TYPE_AC           0xAC   // standard 24VAC for 24VAC solenoids only, with triacs
-#define HW_TYPE_DC           0xDC   // DC powered, for both DC and 24VAC solenoids, with boost converter and MOSFETs
-#define HW_TYPE_LATCH        0x1A   // DC powered, for DC latching solenoids only, with boost converter and H-bridges
-#define HW_TYPE_UNKNOWN      0xFF
+#define HW_TYPE_AC           0xAC   // 172, standard 24VAC for 24VAC solenoids only, with triacs
+#define HW_TYPE_DC           0xDC   // 220, DC powered, for both DC and 24VAC solenoids, with boost converter and MOSFETs
+#define HW_TYPE_LATCH        0x1A   // 26, DC powered, for DC latching solenoids only, with boost converter and H-bridges
+#define HW_TYPE_UNKNOWN      0xFF   // 255
 
 #if ! defined(ESP32)
 /** Data file names */
@@ -452,11 +452,12 @@ enum {
 	
 #elif defined(ESP32)
 
-  	#include "esp32.h"
 
 	#define USE_DISPLAY
-	#define USE_SSD1306
-	// #define USE_SH1106
+	//#define USE_SSD1306 // 0.96"
+	#define USE_SH1106 // 1.3"
+	
+	#include "esp32.h"
 
 #elif defined(OSPI) // for OSPi
 

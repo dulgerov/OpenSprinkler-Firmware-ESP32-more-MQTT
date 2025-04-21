@@ -559,7 +559,7 @@ unsigned char OpenSprinkler::start_network() {
 #ifdef ENABLE_DEBUG
 #if defined(ESP32)
   //DEBUG_PRINTLN(F("ESP32 FS dir:"));
-  ESP32_FS_list_dir();
+  //ESP32_FS_list_dir();
   DEBUG_PRINTLN(F("Starting network"));
 #endif //ESP32
 #endif 
@@ -591,6 +591,7 @@ unsigned char OpenSprinkler::start_network() {
 	} else {
 		DEBUG_PRINT(F("OTF start with http_port "));
 		DEBUG_PRINTLN(httpport);
+		delay(500);
 		otf = new OTF::OpenThingsFramework(httpport, ether_buffer, ETHER_BUFFER_SIZE);
 		DEBUG_PRINTLN(F("Started OTF with just local connection"));
 	}
@@ -1030,24 +1031,27 @@ void OpenSprinkler::begin() {
 	detect_expanders();
 #elif defined(ESP32)
 
+	//DEBUG_PRINTLN("ESP32");
+
     hw_type = HW_TYPE_AC;
     
-	PIN_RFRX = E0_PIN_RFRX;
-	PIN_RFTX = E0_PIN_RFTX;
-	PIN_BOOST = E0_PIN_BOOST;
-	PIN_BOOST_EN = E0_PIN_BOOST_EN;
+	// PIN_RFRX = E0_PIN_RFRX;
+	// PIN_RFTX = E0_PIN_RFTX;
+	// PIN_BOOST = E0_PIN_BOOST;
+	// PIN_BOOST_EN = E0_PIN_BOOST_EN;
 	PIN_SENSOR1 = E0_PIN_SENSOR1;
 	PIN_SENSOR2 = E0_PIN_SENSOR2;
-  
-	/*
+  	
 	#if defined(ETHPORT)
 		hw_rev = 2;
 	#else
 		hw_rev = 0;
 	#endif
- 	*/
- 	hw_rev = 0;
+ 	
+
 	  // mainio = new IOEXP(ACDR_I2CADDR); // dont need this as all is handled by ESP32 gpio's
+
+	  DEBUG_PRINTLN("IOEXP Setup");
 
   #if ! defined(USE_IOEXP_SR) || ( defined(USE_IOEXP_SR) && USE_IOEXP_SR != 1 )
   	DEBUG_PRINTLN("Using GPIO IOEXP");
@@ -1081,7 +1085,7 @@ void OpenSprinkler::begin() {
 
 		attachInterrupt(digitalPinToInterrupt(ROTARY_ENCODER_A_PIN), OpenSprinkler::handleEncoder, CHANGE);
 
-	#endif
+	#endif // Button PINs configuration
 
 	/* TODO - interrupt driven button/rotary encoder */
 
@@ -1090,18 +1094,25 @@ void OpenSprinkler::begin() {
 		expanders[i] = NULL;
 	DEBUG_PRINTLN("Starting to detect expanders");
 	detect_expanders();
+	DEBUG_PRINTLN("Expanders detected");
 
 	DEBUG_PRINT("hw_type = "); DEBUG_PRINT(hw_type); DEBUG_PRINT(" hw_rev = "); DEBUG_PRINTLN(hw_rev);
 #else
 
+	#if defined(PIN_SR_OE)
+		DEBUG_PRINTLN("SR OE Setup");
 	// shift register setup
 	pinMode(PIN_SR_OE, OUTPUT);
 	// pull shift register OE high to disable output
 	digitalWrite(PIN_SR_OE, HIGH);
+	#endif
+	#if defined(PIN_SR_LATCH) && PIN_SR_LATCH != 255
+		DEBUG_PRINTLN("SR Latch Setup");
 	pinMode(PIN_SR_LATCH, OUTPUT);
 	digitalWrite(PIN_SR_LATCH, HIGH);
 
 	pinMode(PIN_SR_CLOCK, OUTPUT);
+	#endif
 
 	#if defined(OSPI)
 		pin_sr_data = PIN_SR_DATA;
@@ -1111,11 +1122,12 @@ void OpenSprinkler::begin() {
 			pin_sr_data = PIN_SR_DATA_ALT;
 		// if this is revision 1, use PIN_SR_DATA_ALT
 		pinMode(pin_sr_data, OUTPUT);
-	#else
+	#elif defined(PIN_SR_DATA)
+		DEBUG_PRINTLN("SR Data Setup");
 		pinMode(PIN_SR_DATA, OUTPUT);
 	#endif
 
-#endif
+#endif // endif expanders setup
 
 #if defined(OSPI)
 pinModeExt(PIN_BUTTON_1, INPUT_PULLUP);
@@ -1125,20 +1137,25 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 
 	// init masters_last_on array
 	memset(masters_last_on, 0, sizeof(masters_last_on));
+
+	DEBUG_PRINT("Resetting stations... ");
 	// Reset all stations
 	clear_all_station_bits();
+	DEBUG_PRINT(" clear OK ");
 	apply_all_station_bits();
+	DEBUG_PRINTLN("Done");
 
 #if defined(ESP8266) || defined(ESP32)
+	DEBUG_PRINTLN("Starting sensors - INPUT_PULLUP");
+ 	DEBUG_PRINT("Sensor1 PIN: "); DEBUG_PRINTLN(PIN_SENSOR1);
+  	DEBUG_PRINT("Sensor2 PIN: "); DEBUG_PRINTLN(PIN_SENSOR2);
+
 	// OS 3.0 has two independent sensors
 	pinModeExt(PIN_SENSOR1, INPUT_PULLUP);
 	#if defined(ESP8266) || defined(PIN_SENSOR2) || defined(E0_PIN_SENSOR2)
 	pinModeExt(PIN_SENSOR2, INPUT_PULLUP);
 	#endif
 	
-	DEBUG_PRINTLN("Starting sensors - INPUT_PULLUP");
- 	DEBUG_PRINT("Sensor1 PIN: "); DEBUG_PRINTLN(PIN_SENSOR1);
-  	DEBUG_PRINT("Sensor2 PIN: "); DEBUG_PRINTLN(PIN_SENSOR2);
 #else
 	// pull shift register OE low to enable output
 	digitalWrite(PIN_SR_OE, LOW);
@@ -1166,12 +1183,13 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 
 	// set rf data pin, unless it is not being used
 	if(PIN_RFTX != 255) {
+		DEBUG_PRINTLN("Starting RFTX pins ");
+		DEBUG_PRINT("RFTX PIN: "); DEBUG_PRINTLN(PIN_RFTX);
 		pinModeExt(PIN_RFTX, OUTPUT);
 		digitalWriteExt(PIN_RFTX, LOW);
+	} else {
+		DEBUG_PRINTLN("Skipping RFTX setup");
 	}
-
-	DEBUG_PRINTLN("Starting RFTX pins ");
-  	DEBUG_PRINT("RFTX PIN: "); DEBUG_PRINTLN(PIN_RFTX);
 
 #if defined(ARDUINO)  // AVR SD and LCD functions
 
@@ -1215,14 +1233,26 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 		digitalWrite(PIN_CURR_DIGITAL, LOW);
 		baseline_current = 0;
 
-	#endif
+	#endif //endif current_sens setup
 #endif
 #if defined(USE_DISPLAY)
+
+	DEBUG_PRINT("Display startup - ");
+	#if defined(USE_SSD1306) 
+		DEBUG_PRINTLN("SSD1306");
+	#elif defined(USE_SH1106)
+		DEBUG_PRINTLN("1106");
+	#else 
+		DEBUG_PRINLN("Unknown");
+	#endif
+
 	lcd_start();
 
 	#if defined(USE_SSD1306) || defined(USE_SH1106)
+		#ifndef ESP32
 		lcd.createChar(ICON_ETHER_CONNECTED, _iconimage_ether_connected);
 		lcd.createChar(ICON_ETHER_DISCONNECTED, _iconimage_ether_disconnected);
+		#endif
 		lcd.createChar(ICON_WIFI_CONNECTED, _iconimage_wifi_connected);
 		lcd.createChar(ICON_WIFI_DISCONNECTED, _iconimage_wifi_disconnected);
 	#elif defined(USE_LCD)
@@ -1241,8 +1271,8 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 	#if defined(ESP8266) || defined(ESP32)
 
 		/* create custom wifi icon characters */
-		lcd.createChar(ICON_WIFI_CONNECTED, _iconimage_wifi_connected);
-		lcd.createChar(ICON_WIFI_DISCONNECTED, _iconimage_wifi_disconnected);
+		// lcd.createChar(ICON_WIFI_CONNECTED, _iconimage_wifi_connected);
+		// lcd.createChar(ICON_WIFI_DISCONNECTED, _iconimage_wifi_disconnected);
 
 		lcd.setCursor(0,0);
 		lcd.print(F("Init file system"));
@@ -1288,7 +1318,7 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 		} else {
 			ESP32_listDir("/",2);
 			
-			//ESP32_readFile(IOPTS_FILENAME);
+			ESP32_readFile(IOPTS_FILENAME);
 		#endif
 		}
 		DEBUG_PRINTLN(F("Done."));
@@ -1327,16 +1357,29 @@ pinModeExt(PIN_BUTTON_3, INPUT_PULLUP);
 	DEBUG_PRINTLN(F("done."));
 
 	#if defined(ESP32)
-		// workaround for OTF 
+		// workaround for OTF, otherwise LocalServer failes
 		start_network_ap(wifi_ssid.c_str(),wifi_pass.c_str());
 	#endif
-
+	
+	
+	#if defined(SYS_STATUS_LED_PIN)
+		pinMode(SYS_STATUS_LED_PIN,OUTPUT);
+		digitalWrite(SYS_STATUS_LED_PIN,HIGH);
+		delayMicroseconds(200000);
+		digitalWrite(SYS_STATUS_LED_PIN,LOW);
+		delayMicroseconds(100000);
+		digitalWrite(SYS_STATUS_LED_PIN,HIGH);
+		delayMicroseconds(200000);
+		digitalWrite(SYS_STATUS_LED_PIN,LOW);
+	#endif
+		
+	DEBUG_PRINTLN("INIT::begin Completed");
 #else
 	//DEBUG_PRINTLN(get_runtime_path());
 #endif
 }
 
-#if defined(ESP8266) || defined(ESP32)
+#if defined(ESP8266) 
 /** LATCH boost voltage
  *
  */
@@ -1519,7 +1562,11 @@ void OpenSprinkler::apply_all_station_bits() {
 	if(hw_type==HW_TYPE_LATCH) {
 		// if controller type is latching, the control mechanism is different
 		// hence will be handled separately
+		#ifndef ESP32
 		latch_apply_all_station_bits();
+		#else
+		DEBUG_PRINTLN("ESP32 does not support LATCH HW TYPE YET");
+		#endif
 	} else {
 		// Handle DC booster
 		if(hw_type==HW_TYPE_DC && engage_booster) {
@@ -1532,42 +1579,52 @@ void OpenSprinkler::apply_all_station_bits() {
 			engage_booster = 0;
 		}
 
-		// DEBUG_PRINT("IOEXP type: ");
-		// DEBUG_PRINTLN(drio->type);
+		DEBUG_PRINT("IOEXP type: ");
+		DEBUG_PRINTLN(drio->type);
 		// DEBUG_PRINTLN(station_bits[0]);
-		
+
 		// Handle driver board (on main controller)
 		if(drio->type==IOEXP_TYPE_9555) {
+			DEBUG_PRINTLN("IOEXP 9555");
 			/* revision >= 1 uses PCA9555 with active high logic */
 			uint16_t reg = drio->i2c_read(NXP_OUTPUT_REG);  // read current output reg value
 			reg = (reg&0xFF00) | station_bits[0]; // output channels are the low 8-bit
 			drio->i2c_write(NXP_OUTPUT_REG, reg); // write value to register
 		} else if(drio->type==IOEXP_TYPE_8574) {
+			DEBUG_PRINTLN("IOEXP 8574");
 			/* revision 0 uses PCF8574 with active low logic, so all bits must be flipped */
 			drio->i2c_write(NXP_OUTPUT_REG, ~station_bits[0]);
 		}
 		#if defined(ESP32)
 		 else if(drio->type == IOEXP_TYPE_BUILD_IN_GPIO  || drio->type == IOEXP_TYPE_SR){
+			DEBUG_PRINTLN("ESP32 IOEXP");
 			// stations_bits[0] holds the master station zones as a byte
 			if (STATION_LOGIC) {
+				DEBUG_PRINTLN("HIGH = On station logic");
 				#if defined(SEPARATE_MASTER_VALVE)
 				// DEBUG_PRINT("Separate master on GPIO ");
 				// DEBUG_PRINTLN(SEPARATE_MASTER_VALVE);
 				// DEBUG_PRINTLN(station_bits[0]);
 				if ( station_bits[0] > 0 ) {
-					// DEBUG_PRINTLN("Turning MASTER VALVE On");
+					DEBUG_PRINTLN("Turning MASTER VALVE On");
 					digitalWrite(SEPARATE_MASTER_VALVE,HIGH);
 				} else {
-					// DEBUG_PRINTLN("Turning MASTER VALVE Off");
+					DEBUG_PRINTLN("Turning MASTER VALVE Off");
 					digitalWrite(SEPARATE_MASTER_VALVE,LOW);
 				}
 				#endif
+
+				DEBUG_PRINT("Setting i2c stations... ");
 				drio->i2c_write(255, station_bits[0]);
+				DEBUG_PRINTLN("done");
 			} else {
+				DEBUG_PRINTLN("LOW = On station logic");
 				#if defined(SEPARATE_MASTER_VALVE)
 				if ( station_bits[0] > 0 ) {
+					DEBUG_PRINTLN("Turning MASTER VALVE On");
 					digitalWrite(SEPARATE_MASTER_VALVE,LOW);
 				} else {
+					DEBUG_PRINTLN("Turning MASTER VALVE Off");
 					digitalWrite(SEPARATE_MASTER_VALVE,HIGH);
 				}
 				#endif
@@ -1576,8 +1633,12 @@ void OpenSprinkler::apply_all_station_bits() {
 		} 
 		#endif
 
+		DEBUG_PRINT("Main station set, doing expanders");
+
 		// Handle expansion boards
 		for(int i=0;i<MAX_EXT_BOARDS/2;i++) {
+			DEBUG_PRINT(" EXP_");
+			DEBUG_PRINT(i);
 			uint16_t data = station_bits[i*2+2];
 			data = (data<<8) + station_bits[i*2+1];
 			if(expanders[i]->type==IOEXP_TYPE_9555) {
@@ -1586,6 +1647,8 @@ void OpenSprinkler::apply_all_station_bits() {
 				expanders[i]->i2c_write(NXP_OUTPUT_REG, ~data);
 			}
 		}
+
+		DEBUG_PRINTLN(" done");
 	}
 
 #else
@@ -2463,7 +2526,13 @@ void OpenSprinkler::factory_reset() {
 
 	#if defined(ESP32)
 	// 0. create the directory
-	//LittleFS.mkdir(IOPTS_FILENAME);
+		//LittleFS.mkdir(IOPTS_FILENAME);
+		if ( LittleFS.exists(IOPTS_FILENAME) ) {
+			File ioptsf = LittleFS.open(IOPTS_FILENAME);
+			if ( ioptsf.isDirectory() ) {
+				LittleFS.rmdir(IOPTS_FILENAME);
+			}
+		}
 	#endif
 
 	// 1. reset integer options (by saving default values)
@@ -2516,7 +2585,11 @@ void OpenSprinkler::factory_reset() {
 	file_write_byte(DONE_FILENAME, 0, 1);
 
 	#if defined(ESP32)
-		// workaround for OTF 
+		// workaround for OTF, otherwise the LocalServer fails
+		if ( strlen(wifi_ssid.c_str()) < 3 ) {
+			DEBUG_PRINTLN("SSID too short");
+			//wifi_ssid = get_ap_ssid();
+		}
 		start_network_ap(wifi_ssid.c_str(),wifi_pass.c_str());
 	#endif
 }
@@ -2564,15 +2637,18 @@ void OpenSprinkler::parse_otc_config() {
 /** Setup function for options */
 void OpenSprinkler::options_setup() {
 
-	#if defined(ESP8266) || defined(ESP32)
+	#if defined(ESP8266)
 	LittleFS.mkdir(IOPTS_FILENAME);
 	#endif
 	//LittleFS.mkdir(DONE_FILENAME);
 	if ( !file_exists(IOPTS_FILENAME) ) {
 		DEBUG_PRINTLN("IOPTS missing");
+		#if defined(ESP32)
+		//LittleFS.mkdir(IOPTS_FILENAME);
+		#endif
 	}
 	if ( file_read_byte(IOPTS_FILENAME, IOPT_FW_VERSION)<220 ) {
-		DEBUG_PRINTLN("Wrong version");
+		DEBUG_PRINT("Wrong version: ");
 		DEBUG_PRINTLN(file_read_byte(IOPTS_FILENAME, IOPT_FW_VERSION));
 	}
 	if ( !file_exists(DONE_FILENAME) ) {
@@ -3616,6 +3692,14 @@ void OpenSprinkler::toggle_screen_led() {
 	static unsigned char status = 0;
 	status = 1-status;
 	set_screen_led(!status);
+}
+
+void OpenSprinkler::toggle_sys_led() {
+	#if defined(SYS_STATUS_LED_PIN)
+	static byte status = 0;
+	status = 1-status;
+	digitalWrite(SYS_STATUS_LED_PIN,( status ? HIGH : LOW ));
+	#endif
 }
 
 void OpenSprinkler::set_screen_led(unsigned char status) {

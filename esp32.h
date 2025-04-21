@@ -66,45 +66,48 @@
   extern unsigned char PIN_IOEXP_INT;
 
 
-  #define E0_PIN_BUTTON_1      25 // button 1 - v1pr 18
-  #define E0_PIN_BUTTON_2      5 // button 2 - v1pr 5, originally 0
-  #define E0_PIN_BUTTON_3      26 // button 3 - vipr 17
+  #define E0_PIN_BUTTON_1      18 // button 1 - v1pr 18, default 25
+  #define E0_PIN_BUTTON_2      5 // button 2 - v1pr 5, default 0
+  #define E0_PIN_BUTTON_3      17 // button 3 - v1pr 17, default 26
   #define E0_PIN_RFRX          255
   #define E0_PIN_RFTX          255
-  #define E0_PIN_BOOST         255// special HW needed
-  #define E0_PIN_BOOST_EN      255// special HW needed
-  #define E0_PIN_LATCH_COM     255// not needed for ESP32
-  #define E0_PIN_SENSOR1       36 // sensor 1 - v1pr 39
-  #define E0_PIN_SENSOR2       2 // sensor 2  - v1pr 33
-  #define E0_PIN_IOEXP_INT     255// not needed for ESP32
+  #define E0_PIN_BOOST         255 // special HW needed
+  #define E0_PIN_BOOST_EN      255 // special HW needed
+  #define E0_PIN_LATCH_COM     255 // not needed for ESP32
+  #define E0_PIN_SENSOR1       39 // sensor 1 - v1pr 39, default 36
+  #define E0_PIN_SENSOR2       33 // sensor 2  - v1pr 33, default 2
+  #define E0_PIN_IOEXP_INT     255 // not needed for ESP32
  
   #define PIN_ETHER_CS         255 // ENC28J60 CS (chip select pin) is 16 on OS 3.2.
 
-  #define USE_IOEXP_SR 0 // use Shift-register as station setting - uncomment this to use built-in gpio style
+  #define USE_IOEXP_SR 1 // use Shift-register as station setting - uncomment this to use built-in gpio style, default 0
   
-  #define ON_BOARD_GPIN_LIST     {12,13,14,15,16,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined
+  // default
+  // #define ON_BOARD_GPIN_LIST     {12,13,14,15,16,255,255,255} //  ESP32 on board pins to be used as sections, 255 = pin not defined
+  // v1pr's board, these are the GPIO pins user for stations - IOEXP PCF/PCA not (yet) supported
+  #define ON_BOARD_GPIN_LIST     {2,4,255,255,255,255,255,255} // was 2,4
   #define PIN_FREE_LIST     {} // no free GPIO pin at the moment
 
   // if set to a real ADC pin, than it means the board has current sensor capabilities
-  #define PIN_CURR_SENSE      39 // not used on v1pr's board, so 255
+  #define PIN_CURR_SENSE      255 // not used on v1pr's board, so 255, defaut 39
   
-  #define STATION_LOGIC  0 // Zone output logic for relays - 1 => HIGH in ON, 0 => LOW is ON - v1pr board: 1
+  #define STATION_LOGIC 1 // Zone output logic for relays - 1 => HIGH in ON, 0 => LOW is ON - v1pr board: 1
 
-  // Rotary Encoder instead of buttons - not used for now
+  // Rotary Encoder instead of buttons - not used for now, testing/development
   //#define USE_ROTARY_ENCODER
-  #define ROTARY_ENCODER_A_PIN 35 // must be interrupt capable PIN!
-  #define ROTARY_ENCODER_B_PIN 34
-  #define ROTARY_ENCODER_BUTTON_PIN 33 // this should be same, BUTTON_2
+  //#define ROTARY_ENCODER_A_PIN 35 // must be interrupt capable PIN!
+  //#define ROTARY_ENCODER_B_PIN 34
+  //#define ROTARY_ENCODER_BUTTON_PIN 5 // this should be same, BUTTON_2, default 33
   
-  #define BOOT_MENU_V2
+  //#define BOOT_MENU_V2
 
   #define SEPARATE_MASTER_VALVE 19
 
   // 74HC595 shift reg
   // #define IOEXP_SR_OE_PIN // output enable pin, not used now
-  #define IOEXP_SR_DATA_PIN 18
-  #define IOEXP_SR_CLK_PIN 27
-  #define IOEXP_SR_LATCH_PIN 32
+  #define IOEXP_SR_DATA_PIN 25 // DS default 18
+  #define IOEXP_SR_CLK_PIN 27 // SH_CP
+  #define IOEXP_SR_LATCH_PIN 32 // ST_CP
 
   #define SYS_STATUS_LED_PIN  13
 
@@ -161,8 +164,8 @@
 */
 
   /* these should be cleaned up */
-  #define V2_PIN_SRLAT         IOEXP_PIN+9  // shift register latch
-	#define V2_PIN_SRCLK         IOEXP_PIN+10 // shift register clock
-	#define V2_PIN_SRDAT         IOEXP_PIN+11 // shift register data
+  // #define V2_PIN_SRLAT         IOEXP_PIN+9  // shift register latch
+	// #define V2_PIN_SRCLK         IOEXP_PIN+10 // shift register clock
+	// #define V2_PIN_SRDAT         IOEXP_PIN+11 // shift register data
 #endif
 #endif //_ESP32_H

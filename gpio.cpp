@@ -145,6 +145,8 @@ void BUILD_IN_GPIO::set_pins_output_mode() {
   int i;
   for (i=0; i<8; i++)
     if ( on_board_gpin_list[i] != 255){
+		DEBUG_PRINT("Setting PIN ");
+		DEBUG_PRINTLN(on_board_gpin_list[i]);
       pinModeExt( on_board_gpin_list[i], OUTPUT);
     }
 }
@@ -160,26 +162,29 @@ void BUILD_IN_GPIO::i2c_write(uint8_t reg, uint16_t v) {
 
 void IOEXP_SR::set_pins_output_mode(){
 	
+	// not needed, this is done before anything else to prevent unstable behavior
+	DEBUG_PRINTLN("SR PINs already inited before anything else");
+	return;
+
 	DEBUG_PRINTLN("Setting up SR pins");
-	//DEBUG_PRINTLN(IOEXP_SR_LATCH_PIN);
-	//DEBUG_PRINTLN(IOEXP_SR_CLK_PIN);
+	DEBUG_PRINTLN(IOEXP_SR_LATCH_PIN);
+	DEBUG_PRINTLN(IOEXP_SR_CLK_PIN);
 	// shift register setup
 	// pinMode(PIN_SR_OE, OUTPUT);
 	// pull shift register OE high to disable output
 	// digitalWrite(PIN_SR_OE, HIGH);
-	pinMode(IOEXP_SR_LATCH_PIN, OUTPUT);
-	DEBUG_PRINTLN("Latch 1");
-	digitalWrite(IOEXP_SR_LATCH_PIN, HIGH);
-	DEBUG_PRINTLN("Latch OK");
-
+	pinMode(IOEXP_SR_DATA_PIN, OUTPUT);
+	digitalWrite(IOEXP_SR_DATA_PIN, LOW);
+	DEBUG_PRINTLN("DATA OK");
+	
 	pinMode(IOEXP_SR_CLK_PIN, OUTPUT);
 	digitalWrite(IOEXP_SR_CLK_PIN, HIGH);
 	DEBUG_PRINTLN("CLK OK");
 	
-	pinMode(IOEXP_SR_DATA_PIN,	OUTPUT);
-	digitalWrite(IOEXP_SR_DATA_PIN, LOW);
-	DEBUG_PRINTLN("DATA OK");
-
+	pinMode(IOEXP_SR_LATCH_PIN, OUTPUT);
+	DEBUG_PRINTLN("Latch 1");
+	digitalWrite(IOEXP_SR_LATCH_PIN, HIGH);
+	DEBUG_PRINTLN("Latch OK");
 
 	#if defined(SEPARATE_MASTER_VALVE)
 	DEBUG_PRINTLN("Enabling separate master valve");
@@ -199,17 +204,13 @@ void IOEXP_SR::i2c_write(uint8_t reg, uint16_t v){
 	v = (uint8_t)(v&0xFF) | inputmask;
   	digitalWrite(IOEXP_SR_LATCH_PIN, LOW);
 	//byte s, sbits;
-		
-		// DEBUG_PRINT("Setting IOEXP pins: ");
-		// DEBUG_PRINTLN(v);
-		/*
+	/*
 	for(s=0;s<8;s++) {
 		digitalWrite(IOEXP_SR_CLK_PIN, LOW);
 		digitalWrite(IOEXP_SR_DATA_PIN, (v & ((byte)1<<(7-s))) ? HIGH : LOW );
 	}*/
 	
 	shiftOut(IOEXP_SR_DATA_PIN, IOEXP_SR_CLK_PIN, MSBFIRST, v);
-	
 	digitalWrite(IOEXP_SR_LATCH_PIN, HIGH);
 }
 #endif

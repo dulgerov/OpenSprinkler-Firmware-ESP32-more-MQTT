@@ -438,6 +438,7 @@ public:
 	#if defined(USE_SSD1306) || defined(USE_SH1106)
 	static void flash_screen();
 	static void toggle_screen_led();
+	static void toggle_sys_led();
 	static void set_screen_led(unsigned char status);
 	#endif
 

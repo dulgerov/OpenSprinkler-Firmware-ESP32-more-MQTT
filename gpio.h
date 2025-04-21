@@ -132,6 +132,10 @@ public:
 private:
   uint8_t inputmask = 0;  // mask bits for input pins
   uint8_t on_board_gpin_list[8] = ON_BOARD_GPIN_LIST; // list of gpins 
+
+  void digitalWrite(uint8_t pin, uint8_t v) {
+	::digitalWrite(pin,v);
+  }
 };
 
 class IOEXP_SR : public IOEXP {
@@ -143,6 +147,9 @@ public:
   uint16_t i2c_read(uint8_t reg);*/
   void set_pins_output_mode();
   void i2c_write(uint8_t reg, uint16_t v);
+  void digitalWrite(uint8_t pin, uint8_t v) {
+	::digitalWrite(pin,v);
+  }
 private:
   uint8_t inputmask = 0;  // mask bits for input pins
 };
@@ -153,7 +160,7 @@ void pinModeExt(unsigned char pin, unsigned char mode);
 void digitalWriteExt(unsigned char pin, unsigned char value);
 unsigned char digitalReadExt(unsigned char pin);
 
-#endif	// ESP8266
+#endif	// ESP8266 || ESP32
 
 #else
 

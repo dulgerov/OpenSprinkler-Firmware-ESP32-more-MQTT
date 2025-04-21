@@ -6,23 +6,23 @@ Work is based on JaCharer's work (https://github.com/JaCharer/OpenSprinkler-Firm
 
 **As of now - 2023.05.14 - NOTHING IS TESTED, but code compiles under PlatformIO(VSCode).**
 **As of now - 2023.06.05 - Code is tested by some, runs on Wokwi simulator, but had to apply workaround after factory reset.**
+**As of now - 2025.04.21 - Code is updated for latest OS, tested on my HW, waiting for other feedbacks. Sensor2 issue fixed.
 
-** Before the merge of original master - 2024.05.06 - the 2.1.9 was working as reported by forum users, however it seemed that one of the sensors were faulty.
-** As of now - 2023.05.08 - the OpenSprinkler master's branch has been merged, so firmware version is 2.2.0 (3), code compiles, my test device boots up nicely, connects to wifi nut no other functionality is tested yet
 
 ** Don't forget to change esp32.h according to your settings! It's set for my setup with ShiftRegister output and SH1106 LCD (instead of the default SSD1306) **
+
+Theres is a new version of (boot) menu, you can enable in esp32.h, experimental.
+Rotary encoder support - instead of buttons are experimental  (I really hate the original 3 button solution - sorry Ray).
 
 Hopefully I can test it in the coming days/weeks on my HW and remove this comment :)
 
 HW is AC only, so no support, for DC/LATCH. Wired ethernet is also not supported now, maybe in the future.
 
-LCD can be set also to SH1106 (1.3"), instead of SSD1306 (0.96").
+LCD can be set also to SH1106 (1.3"), instead of SSD1306 (0.96"). Check defines.h!
 
 Multiple outputs are supported: GPIO, ShiftRegister and the standard PCF8574/PCA9555A
 
-OpenThingsLibrary is my fork, since there are some ESP32 related bugs. Will change when PR accepted.
-
-Final comment. This is an experimental software in alpha stage, please be very careful connecting any external devices as errors may damage your device. You can use it, but it's at your own risk !
+Final comment: this is an experimental software in alpha stage, please be very careful connecting any external devices as errors may damage your device. You can use it, but it's at your own risk !
 
 Know limitation
 1. only AC configuration for now. 

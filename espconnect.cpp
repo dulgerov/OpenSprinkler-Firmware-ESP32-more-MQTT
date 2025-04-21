@@ -54,7 +54,12 @@ String scan_network() {
 }
 
 void start_network_ap(const char *ssid, const char *pass) {
-	if(!ssid) return;
+	if(!ssid || ssid == "\0" ) return;
+
+	DEBUG_PRINT("SSID: '");
+	DEBUG_PRINT(ssid);
+	DEBUG_PRINTLN("'");
+
 	if(pass) WiFi.softAP(ssid, pass);
 	else WiFi.softAP(ssid);
 	DEBUG_PRINT(F("Starting AP with SSID "));

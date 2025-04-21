@@ -168,12 +168,15 @@ void ui_state_machine() {
 	if(millis() - last_usm <= UI_STATE_MACHINE_INTERVAL) { return; }
 	last_usm = millis();
 
-#if defined(USE_SSD1306) || defined(USE_SH1106)
+	#if defined(USE_SSD1306) || defined(USE_SH1106) || defined(SYS_STATUS_LED_PIN)
 	// process screen led
 	static ulong led_toggle_timeout = 0;
 	if(led_blink_ms) {
 		if(millis()>led_toggle_timeout) {
+			#if defined(USE_SSD1306) || defined(USE_SH1106)
 			os.toggle_screen_led();
+			#endif
+			os.toggle_sys_led();
 			led_toggle_timeout = millis() + led_blink_ms;
 		}
 	}
@@ -389,6 +392,13 @@ void ui_state_machine() {
 #if defined(ARDUINO)
 void do_setup() {
 	
+	DEBUG_BEGIN(115200);
+
+	DEBUG_PRINT(F("Build timestamp: "));
+	DEBUG_PRINT(__DATE__);
+	DEBUG_PRINT(" ");
+	DEBUG_PRINTLN(__TIME__);
+
 	#if defined(ESP32)
 
 	/* Setting internal station pins to prevent unstable behavior on startup */
@@ -412,7 +422,8 @@ void do_setup() {
 	#endif
 
 	  #if defined(SEPARATE_MASTER_VALVE)
-	  //DEBUG_PRINTLN("Enabling separate MASTER valve");
+	  DEBUG_PRINT("Enabling separate MASTER valve @ ");
+	  DEBUG_PRINTLN(SEPARATE_MASTER_VALVE);
 	  pinMode(SEPARATE_MASTER_VALVE,OUTPUT);
 	  if ( STATION_LOGIC ) {
 		digitalWrite(SEPARATE_MASTER_VALVE,LOW);
@@ -430,15 +441,8 @@ void do_setup() {
 	MCUSR &= ~(1<<WDRF);
 #endif
 
-	DEBUG_BEGIN(115200);
-
-	DEBUG_PRINT(F("Build timestamp: "));
-	DEBUG_PRINT(__DATE__);
-	DEBUG_PRINT(" ");
-	DEBUG_PRINTLN(__TIME__);
 
 	DEBUG_PRINTLN(F("--- Starting setup"));
-
 	os.begin();          // OpenSprinkler init
 	DEBUG_PRINTLN(F("--- Setting up options"));
 	os.options_setup();  // Setup options
@@ -462,6 +466,7 @@ void do_setup() {
 	WDTCSR |= _BV(WDIE);
 #endif
 	
+	DEBUG_PRINTLN(F("--- Network init"));
 	if (os.start_network()) {  // initialize network
 		os.status.network_fails = 0;
 	} else {

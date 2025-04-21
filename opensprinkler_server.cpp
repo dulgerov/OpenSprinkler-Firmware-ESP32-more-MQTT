@@ -2263,10 +2263,14 @@ void start_server_client() {
 }
 
 void start_server_ap() {
-	if(!otf) return;
-
+	//if(!otf) return;
+	DEBUG_PRINTLN("Scanning network");
 	scanned_ssids = scan_network(); // this is not used here, I don't know why it's needed
+	DEBUG_PRINTLN("Generating SSID");
 	String ap_ssid = get_ap_ssid();
+	DEBUG_PRINTLN("Generated");
+	DEBUG_PRINT("Generated AP SSID: ");
+	DEBUG_PRINTLN(ap_ssid.c_str());
 	start_network_ap(ap_ssid.c_str(), NULL);
 	delay(500);
 	otf->on("/", on_ap_home);
