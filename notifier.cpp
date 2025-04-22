@@ -162,7 +162,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 	}
 	#endif
 
-	#if defined(ESP8266) || defined(ESP32)
+	#if defined(ESP8266)
 		EMailSender::EMailMessage email_message;
 	#else
 		struct {
@@ -186,7 +186,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 
 	if (ifttt_enabled || email_enabled) {
 		strcpy_P(postval, PSTR("{\"value1\":\"On site ["));
-		os.sopt_load(SOPT_DEVICE_NAME, topic, PUSH_TOPIC_LEN);
+		os.sopt_load(SOPT_DEVICE_NAME, topic);
 		topic[PUSH_TOPIC_LEN]=0;
 		strcat(postval+strlen(postval), topic);
 		strcat_P(postval, PSTR("], "));
@@ -262,6 +262,45 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 			}
 			break;
 
+    case  NOTIFY_STATION_ALL:
+
+      DEBUG_PRINTLN("Sending manual status");
+      if (os.mqtt.enabled()) {
+            int i;
+            String pinstatus;
+            String pinstatuses;
+            unsigned int pin_list[] = ON_BOARD_GPIN_LIST;
+            for( i=0; i<8; i++ ){
+              if(pin_list[i] !=255){
+                if(digitalRead(pin_list[i]) == HIGH) {
+                  pinstatus = '1';
+                } else {
+                  pinstatus = '0';
+                }
+                DEBUG_PRINTLN(pinstatus);
+               pinstatuses += pinstatus+',';
+              }
+            }
+            DEBUG_PRINTLN(pinstatuses);
+            snprintf_P(topic, PUSH_TOPIC_LEN, PSTR("station/%s"), "all");
+            strcat_P(payload, PSTR("{\"statuses\":1"));
+            snprintf_P(payload+strlen(payload), PUSH_PAYLOAD_LEN, PSTR(",\"states\":%s"), (String)pinstatuses);
+            strcat_P(payload, PSTR("}"));
+/*        
+        snprintf_P(topic, PUSH_TOPIC_LEN, PSTR("station/%d"), 1);
+        strcat_P(payload, PSTR("{\"statuses\":1"));
+        if((char)pinstatuses > 0){
+          snprintf_P(payload+strlen(payload), PUSH_PAYLOAD_LEN, PSTR(",\"duration\":%s"), (char)pinstatuses);
+        }
+        strcat_P(payload, PSTR("}"));
+*/
+      }
+
+      // todo: add IFTTT support for this event as well.
+      // currently no support due to the number of events exceeds 8 so need to use more than 1 byte
+      break;
+
+
 		case NOTIFY_FLOW_ALERT:{
 			//First determine if a Flow Alert should be sent based on flow amount and setpoint
 
@@ -323,7 +362,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 
 					// Get and format current local time as "YYYY-MM-DD hh:mm:ss AM/PM"
 					strcat_P(postval, PSTR("at "));
-					time_os_t curr_time = os.now_tz();
+					time_t curr_time = os.now_tz();
 					#if defined(ARDUINO)
 					tmElements_t tm;
 					breakTime(curr_time, tm);
@@ -487,14 +526,8 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 						unsigned char ip[4] = {_ip[0], _ip[1], _ip[2], _ip[3]};
 						ip2string(postval, TMP_BUFFER_SIZE, ip);
 					}
-					#elif defined(ESP32)
-						// no ETH support for ESP32 now
-						IPAddress _ip;
-						_ip = WiFi.localIP();
-						unsigned char ip[4] = {_ip[0], _ip[1], _ip[2], _ip[3]};
-						ip2string(postval, TMP_BUFFER_SIZE, ip);
 					#else
-						ip2string(postval, TMP_BUFFER_SIZE, &(Ethernet.localIP()[0]));
+						//ip2string(postval, TMP_BUFFER_SIZE, &(Ethernet.localIP()[0]));
 					#endif
 				#else
 					strcat_P(postval, PSTR("controller process restarted."));
@@ -510,7 +543,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 	if (ifttt_enabled) {
 		strcat_P(postval, PSTR("\"}"));
 
-		BufferFiller bf = BufferFiller(ether_buffer, TMP_BUFFER_SIZE);
+		BufferFiller bf = BufferFiller(ether_buffer);
 		bf.emit_p(PSTR("POST /trigger/sprinkler/with/key/$O HTTP/1.0\r\n"
 						"Host: $S\r\n"
 						"Accept: */*\r\n"
@@ -524,7 +557,7 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 	if(email_enabled){
 		email_message.message = strchr(postval, 'O'); // ad-hoc: remove the value1 part from the ifttt message
 		#if defined(ARDUINO)
-			#if defined(ESP8266) || defined(ESP32)
+			#if defined(ESP8266)
 				if(email_host && email_username && email_password && email_recipient) { // make sure all are valid
 					EMailSender emailSend(email_username, email_password);
 					emailSend.setSMTPServer(email_host);

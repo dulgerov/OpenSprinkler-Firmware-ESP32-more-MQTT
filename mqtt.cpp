@@ -22,19 +22,17 @@
  */
 
 #if defined(ARDUINO)
-	#include <Arduino.h>
-	#if defined(ESP8266)
-		#include <ESP8266WiFi.h>
-	#elif defined(ESP32)
-		// no wired ethernet support
-		#include <WiFi.h>
-	#else
-		#include <Ethernet.h>
-	#endif
-	#define MQTT_SOCKET_TIMEOUT 5
-	#include <PubSubClient.h>
+  #include <Arduino.h>
+  #if defined(ESP8266)
+    #include <ESP8266WiFi.h>
+  #elif defined(ESP32)
+    // no wired ethernet support
+  #else
+    #include <Ethernet.h>
+  #endif
+  #include <PubSubClient.h>
 
-	struct PubSubClient *mqtt_client = NULL;
+  struct PubSubClient *mqtt_client = NULL;
 
 #else
 	#include <time.h>
@@ -51,15 +49,22 @@
 #include "types.h"
 #include "mqtt.h"
 #include "ArduinoJson.hpp"
+#include "notifier.h"
+
+//NotifQueue notif; // NotifQueue object
+
 
 // Debug routines to help identify any blocking of the event loop for an extended period
 
 #if defined(ENABLE_DEBUG)
 	#if defined(ARDUINO)
 		#include "TimeLib.h"
-		#define DEBUG_TIMESTAMP(msg, ...) {time_os_t t = os.now_tz(); Serial.printf("%02d-%02d-%02d %02d:%02d:%02d - ", year(t), month(t), day(t), hour(t), minute(t), second(t));}
+//		#define DEBUG_TIMESTAMP(msg, ...) {time_os_t t = os.now_tz(); Serial.printf("%02d-%02d-%02d %02d:%02d:%02d - ", year(t), month(t), day(t), hour(t), minute(t), second(t));}
+    #define DEBUG_PRINTF(msg, ...)    {Serial.printf(msg, ##__VA_ARGS__);}
+    #define DEBUG_TIMESTAMP(msg, ...) {time_t t = os.now_tz(); Serial.printf("%02d-%02d-%02d %02d:%02d:%02d - ", year(t), month(t), day(t), hour(t), minute(t), second(t));}
 	#else
 		#include <sys/time.h>
+		#define DEBUG_PRINTF(msg, ...)    {printf(msg, ##__VA_ARGS__);}
 		#define DEBUG_TIMESTAMP()         {char tstr[21]; time_os_t t = time(NULL); struct tm *tm = localtime(&t); strftime(tstr, 21, "%y-%m-%d %H:%M:%S - ", tm);printf("%s", tstr);}
 	#endif
 	#define DEBUG_LOGF(msg, ...)        {DEBUG_TIMESTAMP(); DEBUG_PRINTF(msg, ##__VA_ARGS__);}
@@ -67,6 +72,7 @@
 	static unsigned long _lastMillis = 0; // Holds the timestamp associated with the last call to DEBUG_DURATION()
 	inline unsigned long DEBUG_DURATION() {unsigned long dur = millis() - _lastMillis; _lastMillis = millis(); return dur;}
 #else
+	#define DEBUG_PRINTF(msg, ...)  {}
 	#define DEBUG_LOGF(msg, ...)    {}
 	#define DEBUG_DURATION()        {}
 #endif
@@ -99,6 +105,8 @@ int OSMqtt::_port = MQTT_DEFAULT_PORT;  // Port of the broker (default 1883)
 bool OSMqtt::_enabled = false;          // Flag indicating whether MQTT is enabled
 char OSMqtt::_pub_topic[MQTT_MAX_TOPIC_LEN + 1] = {0}; // topic for publishing data
 char OSMqtt::_sub_topic[MQTT_MAX_TOPIC_LEN + 1] = {0}; // topic for subscribing
+//char OSMqtt::_pub_topic[MQTT_MAX_TOPIC_LEN + 1] = "00A6F79E94/status"; // topic for publishing data
+//char OSMqtt::_sub_topic[MQTT_MAX_TOPIC_LEN + 1] = "00A6F79E94/cmnd"; // topic for subscribing
 bool OSMqtt::_done_subscribed = false;		//Flag indicating if command topic has been subscribed to
 
 //******************************** HELPER FUNCTIONS ********************************// 
@@ -115,6 +123,7 @@ boolean checkPassword(char* pw) {
 	if(findKeyVal(pw, tmp_buffer, TMP_BUFFER_SIZE, PSTR("pw"), true)){
 		if (os.password_verify(tmp_buffer)) return true;
 	}else{
+    DEBUG_LOGF(pw);
 		DEBUG_LOGF("Device password not found.\r\n");
 		return false;
 	}
@@ -126,7 +135,7 @@ boolean checkPassword(char* pw) {
 //handles /cv command
 void changeValues(char *message){
 	DEBUG_LOGF("Changing Values\r\n");
-	#if defined(ESP8266) || defined(ESP32)
+	#if defined(ESP8266)
 		extern uint32_t reboot_timer;
 	#endif
 
@@ -137,7 +146,7 @@ void changeValues(char *message){
 
 	if(findKeyVal(message, tmp_buffer, TMP_BUFFER_SIZE, PSTR("rbt"), true)){
 		DEBUG_LOGF("Rebooting\r\n");
-		#if defined(ESP8266) || defined(ESP32)
+		#if defined(ESP8266)
 			os.status.safe_reboot = 0;
 			reboot_timer = os.now_tz() + 1;
 		#else
@@ -304,14 +313,15 @@ void runOnceProgram(char *message){
 // Initialise the client libraries and event handlers.
 void OSMqtt::init(void) {
 	DEBUG_LOGF("MQTT Init\r\n");
-
+  char id[MQTT_MAX_ID_LEN + 1] = {0};
+  
 	uint8_t mac[6] = {0};
-	#if defined(ESP8266) || defined(ESP32)
-	os.load_hardware_mac(mac, useEth);
-	#else
-	os.load_hardware_mac(mac, true);
-	#endif
-	snprintf(_id, MQTT_MAX_ID_LEN, "OS-%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  #if defined(ESP8266) || defined(ESP32)
+  os.load_hardware_mac(mac, useEth);
+  #else
+  os.load_hardware_mac(mac, true);
+  #endif
+  snprintf(id, MQTT_MAX_ID_LEN, "OS-%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	_id[MQTT_MAX_ID_LEN] = 0;
 
 	_init();
@@ -357,10 +367,13 @@ void OSMqtt::begin(void) {
 				if(username_val) strncpy(_username, username_val, MQTT_MAX_USERNAME_LEN);
 				const char *password_val = doc["pass"];
 				if(password_val) strncpy(_password, password_val, MQTT_MAX_PASSWORD_LEN);
-				const char *pubt_val = doc["pubt"];
+//				const char *pubt_val = doc["pubt"];
+        const char *pubt_val = "00A6F79E94/status";
 				if(pubt_val) strncpy(_pub_topic, pubt_val, MQTT_MAX_TOPIC_LEN);
-				const char *subt_val = doc["subt"];
+//				const char *subt_val = doc["subt"];
+        const char *subt_val = "00A6F79E94/cmnd";
 				if(subt_val) strncpy(_sub_topic, subt_val, MQTT_MAX_TOPIC_LEN);
+
 		}
 
 		// properly end all strings to make sure 
@@ -373,7 +386,7 @@ void OSMqtt::begin(void) {
 
 	if(_pub_topic[0] == 0) { // publish topic is empty
 		DEBUG_LOGF("No pub_topic found\r\n");
-		strcpy_P(_pub_topic, PSTR("opensprinkler"));
+		strcpy_P(_pub_topic, PSTR("00A6F79E94"));
 	}
 
 	if(_sub_topic[0] == 0) { // subscribe topic is empty
@@ -465,22 +478,22 @@ void OSMqtt::loop(void) {
 /**************************** ARDUINO ********************************************/
 #if defined(ARDUINO)
 
-	#if defined(ESP8266) || defined(ESP32)
-		WiFiClient wifiClient;
-	#else
-		EthernetClient ethClient;
-	#endif
+  #if defined(ESP8266) || defined(ESP32)
+    WiFiClient wifiClient;
+  #else
+    EthernetClient ethClient;
+  #endif
 
 int OSMqtt::_init(void) {
 	Client * client = NULL;
 
 	if (mqtt_client) { delete mqtt_client; mqtt_client = 0; }
 
-	#if defined(ESP8266) || defined(ESP32)
-		client = &wifiClient;
-	#else
-		client = &ethClient;
-	#endif
+  #if defined(ESP8266) || defined(ESP32)
+    client = &wifiClient;
+  #else
+    client = &ethClient;
+  #endif
 
 	mqtt_client = new PubSubClient(*client);
 	mqtt_client->setKeepAlive(OS_MQTT_KEEPALIVE);
@@ -539,6 +552,7 @@ int OSMqtt::_publish(const char *topic, const char *payload) {
 	return MQTT_SUCCESS;
 }
 
+void manualStatus();
 void subscribe_callback(const char *topic, unsigned char *payload, unsigned int length) {
 	DEBUG_LOGF("Subscribe Callback\r\n");
 	payload[length] = 0; // properly end the message
@@ -557,7 +571,9 @@ void subscribe_callback(const char *topic, unsigned char *payload, unsigned int 
 		}
 	}else if(message[0]=='m' && message[1]=='p'){
 		programStart(message);
-	}else{
+	}else if(message[0]=='m' && message[1]=='s'){
+   manualStatus();
+  }else{
 		DEBUG_LOGF("Unsupported mqtt subscribe request\r\n");
 		return;
 	}
