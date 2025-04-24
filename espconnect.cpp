@@ -28,7 +28,7 @@
 String scan_network() {
 	WiFi.mode(WIFI_STA);
 	WiFi.disconnect();
-	unsigned char n = WiFi.scanNetworks();
+	byte n = WiFi.scanNetworks();
 	String json;
 	if (n>40) n = 40; // limit to 40 ssids max
 	// maintain old format of wireless network JSON for mobile app compat
@@ -54,12 +54,7 @@ String scan_network() {
 }
 
 void start_network_ap(const char *ssid, const char *pass) {
-	if(!ssid || ssid == "\0" ) return;
-
-	DEBUG_PRINT("SSID: '");
-	DEBUG_PRINT(ssid);
-	DEBUG_PRINTLN("'");
-
+	if(!ssid) return;
 	if(pass) WiFi.softAP(ssid, pass);
 	else WiFi.softAP(ssid);
 	DEBUG_PRINT(F("Starting AP with SSID "));
@@ -68,7 +63,7 @@ void start_network_ap(const char *ssid, const char *pass) {
 	WiFi.disconnect();	// disconnect from router
 }
 
-void start_network_sta_with_ap(const char *ssid, const char *pass, int32_t channel, const unsigned char *bssid) {
+void start_network_sta_with_ap(const char *ssid, const char *pass, int32_t channel, const byte *bssid) {
 	if(!ssid || !pass) return;
 	if(WiFi.getMode()!=WIFI_AP_STA) WiFi.mode(WIFI_AP_STA);
 	DEBUG_PRINT(F("Connecting in AP_STA to WiFi network "));
@@ -76,7 +71,7 @@ void start_network_sta_with_ap(const char *ssid, const char *pass, int32_t chann
 	WiFi.begin(ssid, pass, channel, bssid);
 }
 
-void start_network_sta(const char *ssid, const char *pass, int32_t channel, const unsigned char *bssid) {
+void start_network_sta(const char *ssid, const char *pass, int32_t channel, const byte *bssid) {
 	if(!ssid || !pass) return;
 	if(WiFi.getMode()!=WIFI_STA) WiFi.mode(WIFI_STA);
 #if defined(ESP32)

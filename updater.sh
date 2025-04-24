@@ -2,4 +2,4 @@
 
 git pull
 ./build.sh -s ospi
-systemctl restart OpenSprinkler.service
+/etc/init.d/OpenSprinkler.sh restart

@@ -1,4 +1,4 @@
-/* OpenSprinkler Unified Firmware
+/* OpenSprinkler Unified (AVR/RPI/BBB/LINUX) Firmware
  * Copyright (C) 2015 by Ray Wang (ray@opensprinkler.com)
  *
  * Weather functions header file
@@ -36,7 +36,7 @@ void GetWeather();
 
 extern char wt_rawData[];
 extern int wt_errCode;
-extern unsigned char wt_monthly[];
+extern byte wt_monthly[];
 void load_wt_monthly(char* wto);
-void apply_monthly_adjustment(time_os_t curr_time);
+void apply_monthly_adjustment(ulong curr_time);
 #endif  // _WEATHER_H

@@ -1,4 +1,4 @@
-/* OpenSprinkler Unified Firmware
+/* OpenSprinkler Unified (AVR/RPI/BBB/LINUX/ESP8266) Firmware
  * Copyright (C) 2015 by Ray Wang (ray@opensprinkler.com)
  *
  * OpenSprinkler macro defines and hardware pin assignments
@@ -27,27 +27,29 @@
 #define ENABLE_DEBUG  // enable serial debug
 #define SERIAL_DEBUG // enable debug for OTF
 
+typedef unsigned char byte;
 typedef unsigned long ulong;
 
-#define TMP_BUFFER_SIZE      320   // scratch buffer size
+#define TMP_BUFFER_SIZE      255   // scratch buffer size
 
 /** Firmware version, hardware version, and maximal values */
-#define OS_FW_VERSION  221  // Firmware version: 221 means 2.2.1
+#define OS_FW_VERSION  220  // Firmware version: 220 means 2.2.0
 														// if this number is different from the one stored in non-volatile memory
 														// a device reset will be automatically triggered
 
-#define OS_FW_MINOR      1  // Firmware minor version
+#define OS_FW_MINOR      3  // Firmware minor version
 
 /** Hardware version base numbers */
 #define OS_HW_VERSION_BASE   0x00 // OpenSprinkler
 #define OSPI_HW_VERSION_BASE 0x40 // OpenSprinkler Pi
+#define OSBO_HW_VERSION_BASE 0x80 // OpenSprinkler Beagle
 #define SIM_HW_VERSION_BASE  0xC0 // simulation hardware
 
 /** Hardware type macro defines */
-#define HW_TYPE_AC           0xAC   // 172, standard 24VAC for 24VAC solenoids only, with triacs
-#define HW_TYPE_DC           0xDC   // 220, DC powered, for both DC and 24VAC solenoids, with boost converter and MOSFETs
-#define HW_TYPE_LATCH        0x1A   // 26, DC powered, for DC latching solenoids only, with boost converter and H-bridges
-#define HW_TYPE_UNKNOWN      0xFF   // 255
+#define HW_TYPE_AC           0xAC   // standard 24VAC for 24VAC solenoids only, with triacs
+#define HW_TYPE_DC           0xDC   // DC powered, for both DC and 24VAC solenoids, with boost converter and MOSFETs
+#define HW_TYPE_LATCH        0x1A   // DC powered, for DC latching solenoids only, with boost converter and H-bridges
+#define HW_TYPE_UNKNOWN      0xFF
 
 #if ! defined(ESP32)
 /** Data file names */
@@ -62,11 +64,9 @@ typedef unsigned long ulong;
 /** Station macro defines */
 #define STN_TYPE_STANDARD    0x00 // standard solenoid station
 #define STN_TYPE_RF          0x01	// Radio Frequency (RF) station
-#define STN_TYPE_REMOTE_IP   0x02	// Remote OpenSprinkler station (by IP)
+#define STN_TYPE_REMOTE      0x02	// Remote OpenSprinkler station
 #define STN_TYPE_GPIO        0x03	// direct GPIO station
 #define STN_TYPE_HTTP        0x04	// HTTP station
-#define STN_TYPE_HTTPS       0x05	// HTTPS station
-#define STN_TYPE_REMOTE_OTC  0x06 // Remote OpenSprinkler station (by OTC)
 #define STN_TYPE_OTHER       0xFF
 
 /** Notification macro defines */
@@ -79,7 +79,6 @@ typedef unsigned long ulong;
 #define NOTIFY_SENSOR2         0x0040
 #define NOTIFY_RAINDELAY       0x0080
 #define NOTIFY_STATION_ON      0x0100
-#define NOTIFY_FLOW_ALERT      0x0200
 
 /** HTTP request macro defines */
 #define HTTP_RQT_SUCCESS       0
@@ -139,7 +138,7 @@ typedef unsigned long ulong;
 #define MAX_NUM_BOARDS    (1+MAX_EXT_BOARDS)  // maximum number of 8-zone boards including expanders
 #define MAX_NUM_STATIONS  (MAX_NUM_BOARDS*8)  // maximum number of stations
 #define STATION_NAME_SIZE 32    // maximum number of characters in each station name
-#define MAX_SOPTS_SIZE    320   // maximum string option size
+#define MAX_SOPTS_SIZE    160   // maximum string option size
 
 #define STATION_SPECIAL_DATA_SIZE  (TMP_BUFFER_SIZE - STATION_NAME_SIZE - 12)
 
@@ -149,21 +148,10 @@ typedef unsigned long ulong;
 #define DEFAULT_JAVASCRIPT_URL    "https://ui.opensprinkler.com/js"
 #define DEFAULT_WEATHER_URL       "weather.opensprinkler.com"
 #define DEFAULT_IFTTT_URL         "maker.ifttt.com"
-#define DEFAULT_OTC_SERVER_DEV     "ws.cloud.openthings.io"
-#define DEFAULT_OTC_PORT_DEV       80
-#define DEFAULT_OTC_SERVER_APP    "cloud.openthings.io"
-#define DEFAULT_OTC_PORT_APP       443
-#define DEFAULT_OTC_TOKEN_LENGTH   32
+#define DEFAULT_OTC_SERVER        "ws.cloud.openthings.io"
+#define DEFAULT_OTC_PORT          80
 #define DEFAULT_DEVICE_NAME       "My OpenSprinkler"
 #define DEFAULT_EMPTY_STRING      ""
-
-#if (defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__))
-	#define OS_AVR
-#else  // all non-AVR platforms support OTF, EMAIL and HTTPS
-	#define USE_OTF
-	#define SUPPORT_EMAIL
-	#define SUPPORT_HTTPS
-#endif
 
 /* Weather Adjustment Methods */
 enum {
@@ -246,7 +234,7 @@ enum {
 	IOPT_DNS_IP3,
 	IOPT_DNS_IP4,
 	IOPT_SPE_AUTO_REFRESH,
-	IOPT_NOTIF_ENABLE,
+	IOPT_IFTTT_ENABLE,
 	IOPT_SENSOR1_TYPE,
 	IOPT_SENSOR1_OPTION,
 	IOPT_SENSOR2_TYPE,
@@ -259,15 +247,6 @@ enum {
 	IOPT_SUBNET_MASK2,
 	IOPT_SUBNET_MASK3,
 	IOPT_SUBNET_MASK4,
-	IOPT_FORCE_WIRED,
-	IOPT_LATCH_ON_VOLTAGE,
-	IOPT_LATCH_OFF_VOLTAGE,
-	IOPT_NOTIF2_ENABLE,
-	IOPT_RESERVE_4,
-	IOPT_RESERVE_5,
-	IOPT_RESERVE_6,
-	IOPT_RESERVE_7,
-	IOPT_RESERVE_8,
 	IOPT_WIFI_MODE, //ro
 	IOPT_RESET,     //ro
 	NUM_IOPTS // total number of integer options
@@ -286,7 +265,6 @@ enum {
 	SOPT_OTC_OPTS,
 	SOPT_DEVICE_NAME,
 	SOPT_STA_BSSID_CHL, // wifi extra info: bssid and channel
-	SOPT_EMAIL_OPTS,
 	NUM_SOPTS // total number of string options
 };
 
@@ -315,7 +293,7 @@ enum {
 #undef OS_HW_VERSION
 
 /** Hardware defines */
-#if defined(OS_AVR) // for OS 2.3
+#if defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__) // for OS 2.3
 
 	#define OS_HW_VERSION   (OS_HW_VERSION_BASE+23)
 	#define PIN_FREE_LIST   {2,10,12,13,14,15,18,19}  // Free GPIO pins
@@ -362,8 +340,6 @@ enum {
 	#define digitalReadExt    digitalRead
 	#define digitalWriteExt   digitalWrite
 
-	#define USE_DISPLAY
-	#define USE_LCD
 #elif defined(ESP8266) // for ESP8266
 
 	#define OS_HW_VERSION    (OS_HW_VERSION_BASE+30)
@@ -376,27 +352,26 @@ enum {
 	#define LCD_I2CADDR      0x3C // 128x64 OLED display I2C address
 	#define EEPROM_I2CADDR   0x50 // 24C02 EEPROM I2C address
 
-	#define PIN_CURR_SENSE    A0    // current sensing pin
-	#define PIN_LATCH_VOLT_SENSE A0 // latch voltage sensing pin
+	#define PIN_CURR_SENSE    A0
 	#define PIN_FREE_LIST     {} // no free GPIO pin at the moment
 	#define ETHER_BUFFER_SIZE   2048
 
 	#define PIN_ETHER_CS       16 // Ethernet CS (chip select pin) is 16 on OS 3.2 and above
 
 	/* To accommodate different OS30 versions, we use software defines pins */
-	extern unsigned char PIN_BUTTON_1;
-	extern unsigned char PIN_BUTTON_2;
-	extern unsigned char PIN_BUTTON_3;
-	extern unsigned char PIN_RFRX;
-	extern unsigned char PIN_RFTX;
-	extern unsigned char PIN_BOOST;
-	extern unsigned char PIN_BOOST_EN;
-	extern unsigned char PIN_LATCH_COM;
-	extern unsigned char PIN_LATCH_COMA;
-	extern unsigned char PIN_LATCH_COMK;
-	extern unsigned char PIN_SENSOR1;
-	extern unsigned char PIN_SENSOR2;
-	extern unsigned char PIN_IOEXP_INT;
+	extern byte PIN_BUTTON_1;
+	extern byte PIN_BUTTON_2;
+	extern byte PIN_BUTTON_3;
+	extern byte PIN_RFRX;
+	extern byte PIN_RFTX;
+	extern byte PIN_BOOST;
+	extern byte PIN_BOOST_EN;
+	extern byte PIN_LATCH_COM;
+	extern byte PIN_LATCH_COMA;
+	extern byte PIN_LATCH_COMK;
+	extern byte PIN_SENSOR1;
+	extern byte PIN_SENSOR2;
+	extern byte PIN_IOEXP_INT;
 
 	/* Original OS30 pin defines */
 	//#define V0_MAIN_INPUTMASK 0b00001010 // main input pin mask
@@ -446,18 +421,9 @@ enum {
 	#define V2_PIN_LATCH_COMK    IOEXP_PIN+15 // latch COM- (cathode)
 	#define V2_PIN_SENSOR1       3  // sensor 1
 	#define V2_PIN_SENSOR2       10 // sensor 2
-
-	#define USE_DISPLAY
-	#define USE_SSD1306
-	
 #elif defined(ESP32)
 
-
-	#define USE_DISPLAY
-	//#define USE_SSD1306 // 0.96"
-	#define USE_SH1106 // 1.3"
-	
-	#include "esp32.h"
+  #include "esp32.h"
 
 #elif defined(OSPI) // for OSPi
 
@@ -470,18 +436,27 @@ enum {
 	#define PIN_SENSOR1       14
 	#define PIN_SENSOR2       23
 	#define PIN_RFTX          15    // RF transmitter pin
-	#define PIN_BUTTON_1      24    // button 1
-	#define PIN_BUTTON_2      18    // button 2
-	#define PIN_BUTTON_3      10    // button 3
+	//#define PIN_BUTTON_1      23    // button 1
+	//#define PIN_BUTTON_2      24    // button 2
+	//#define PIN_BUTTON_3      25    // button 3
 
-	#define PIN_FREE_LIST       {5,6,7,8,9,11,12,13,16,19,20,21,23,25,26}  // free GPIO pins
+	#define PIN_FREE_LIST       {5,6,7,8,9,10,11,12,13,16,18,19,20,21,23,24,25,26}  // free GPIO pins
 	#define ETHER_BUFFER_SIZE   16384
 
-	#define SDA 0
-	#define SCL 0
+#elif defined(OSBO) // for OSBo
 
-	#define USE_DISPLAY
-	#define USE_SSD1306
+	#define OS_HW_VERSION    OSBO_HW_VERSION_BASE
+	// these are gpio pin numbers, refer to
+	// https://github.com/mkaczanowski/BeagleBoneBlack-GPIO/blob/master/GPIO/GPIOConst.cpp
+	#define PIN_SR_LATCH      60    // P9_12, shift register latch pin
+	#define PIN_SR_DATA       30    // P9_11, shift register data pin
+	#define PIN_SR_CLOCK      31    // P9_13, shift register clock pin
+	#define PIN_SR_OE         50    // P9_14, shift register output enable pin
+	#define PIN_SENSOR1       48
+	#define PIN_RFTX          51    // RF transmitter pin
+
+	#define PIN_FREE_LIST     {38,39,34,35,45,44,26,47,27,65,63,62,37,36,33,32,61,86,88,87,89,76,77,74,72,73,70,71}
+	#define ETHER_BUFFER_SIZE   16384
 
 #else // for demo / simulation
 	// use fake hardware pins
@@ -499,7 +474,6 @@ enum {
 	#define PIN_RFTX        0
 	#define PIN_FREE_LIST  {}
 	#define ETHER_BUFFER_SIZE   16384
-
 #endif
 
 #if defined(ENABLE_DEBUG) /** Serial debug functions */
@@ -508,14 +482,14 @@ enum {
 		#define DEBUG_BEGIN(x) {Serial.begin(x);}
 		#define DEBUG_PRINT(x) {Serial.print(x);}
 		#define DEBUG_PRINTLN(x) {Serial.println(x);}
-		#define DEBUG_PRINTF(msg, ...)    {Serial.printf(msg, ##__VA_ARGS__);}
+		//#define DEBUG_STRINGIFY(x) {#x;}
+		//#define DEBUG_TOSTRING(x) { DEBUG_STRINGIFY(x); }
 	#else
 		#include <stdio.h>
 		#define DEBUG_BEGIN(x)          {}  /** Serial debug functions */
-		inline  void DEBUG_PRINT(int x) {fprintf(stdout, "%d", x);}
-		inline  void DEBUG_PRINT(const char*s) {fprintf(stdout, "%s", s);}
-		#define DEBUG_PRINTLN(x)        {DEBUG_PRINT(x);fprintf(stdout, "\n");}
-		#define DEBUG_PRINTF(msg, ...)    {fprintf(stdout, msg, ##__VA_ARGS__);}
+		inline  void DEBUG_PRINT(int x) {printf("%d", x);}
+		inline  void DEBUG_PRINT(const char*s) {printf("%s", s);}
+		#define DEBUG_PRINTLN(x)        {DEBUG_PRINT(x);printf("\n");}
 	#endif
 
 #else
@@ -523,11 +497,7 @@ enum {
 	#define DEBUG_BEGIN(x)   {}
 	#define DEBUG_PRINT(x)   {}
 	#define DEBUG_PRINTLN(x) {}
-<<<<<<< HEAD
 	#define DEBUG_STRINGIFY(x) {}
-=======
-	#define DEBUG_PRINTF(x, ...)  {}
->>>>>>> 20991dc2a5e072b8f4fae623990412375cda86a8
 
 #endif
 
@@ -537,14 +507,15 @@ enum {
 	#include <stdlib.h>
 	#include <string.h>
 	#include <stddef.h>
+	inline void itoa(int v,char *s,int b)   {sprintf(s,"%d",v);}
+	inline void ultoa(unsigned long v,char *s,int b) {sprintf(s,"%lu",v);}
+	#define now()       time(0)
 	#define pgm_read_byte(x) *(x)
 	#define PSTR(x)      x
 	#define F(x)         x
 	#define strcat_P     strcat
-	#define strncat_P    strncat
 	#define strcpy_P     strcpy
-	#define memcpy_P     memcpy
-	#define snprintf_P    snprintf
+	#define sprintf_P    sprintf
 	#include<string>
 	#define String       string
 	using namespace std;

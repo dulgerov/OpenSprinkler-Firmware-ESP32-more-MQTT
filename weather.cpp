@@ -1,4 +1,4 @@
-/* OpenSprinkler Unified Firmware
+/* OpenSprinkler Unified (AVR/RPI/BBB/LINUX) Firmware
  * Copyright (C) 2015 by Ray Wang (ray@opensprinkler.com)
  *
  * Weather functions
@@ -26,17 +26,16 @@
 #include "utils.h"
 #include "opensprinkler_server.h"
 #include "weather.h"
-#include "main.h"
-#include "types.h"
 
 extern OpenSprinkler os; // OpenSprinkler object
 extern char tmp_buffer[];
 extern char ether_buffer[];
 char wt_rawData[TMP_BUFFER_SIZE];
 int wt_errCode = HTTP_RQT_NOT_RECEIVED;
-unsigned char wt_monthly[12] = {100,100,100,100,100,100,100,100,100,100,100,100};
+byte wt_monthly[12] = {100,100,100,100,100,100,100,100,100,100,100,100};
 
-unsigned char findKeyVal (const char *str,char *strbuf, uint16_t maxlen,const char *key,bool key_in_pgm=false,uint8_t *keyfound=NULL);
+byte findKeyVal (const char *str,char *strbuf, uint16_t maxlen,const char *key,bool key_in_pgm=false,uint8_t *keyfound=NULL);
+void write_log(byte type, ulong curr_time);
 
 // The weather function calls getweather.py on remote server to retrieve weather data
 // the default script is WEATHER_SCRIPT_HOST/weather?.py
@@ -132,9 +131,12 @@ static void getweather_callback_with_peel_header(char* buffer) {
 }
 
 void GetWeather() {
-	if(!os.network_connected()) return;
+#if defined(ESP8266) || defined(ESP32)
+	if (!useEth)
+		if (os.state!=OS_STATE_CONNECTED || WiFi.status()!=WL_CONNECTED) return;
+#endif
 	// use temp buffer to construct get command
-	BufferFiller bf = BufferFiller(tmp_buffer, TMP_BUFFER_SIZE*2);
+	BufferFiller bf = tmp_buffer;
 	int method = os.iopts[IOPT_USE_WEATHER];
 	// use manual adjustment call for monthly adjustment -- a bit ugly, but does not involve weather server changes
 	if(method==WEATHER_METHOD_MONTHLY) method=WEATHER_METHOD_MANUAL;
@@ -185,7 +187,7 @@ void GetWeather() {
 }
 
 void load_wt_monthly(char* wto) {
-	unsigned char i;
+	byte i;
 	int p[12];
 	for(i=0;i<12;i++) p[i]=100; // init all to 100
 	sscanf(wto, "\"scales\":[%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d]", p,p+1,p+2,p+3,p+4,p+5,p+6,p+7,p+8,p+9,p+10,p+11);
@@ -196,15 +198,15 @@ void load_wt_monthly(char* wto) {
 	}
 }
 
-void apply_monthly_adjustment(time_os_t curr_time) {
+void apply_monthly_adjustment(ulong curr_time) {
 		// ====== Check monthly water percentage ======
 		if(os.iopts[IOPT_USE_WEATHER]==WEATHER_METHOD_MONTHLY) {
 #if defined(ARDUINO)
-			unsigned char m = month(curr_time)-1;
+			byte m = month(curr_time)-1;
 #else
-			time_os_t ct = curr_time;
+			time_t ct = curr_time;
 			struct tm *ti = gmtime(&ct);
-			unsigned char m = ti->tm_mon;  // tm_mon ranges from [0,11]
+			byte m = ti->tm_mon;  // tm_mon ranges from [0,11]
 #endif
 			if(os.iopts[IOPT_WATER_PERCENTAGE]!=wt_monthly[m]) {
 				os.iopts[IOPT_WATER_PERCENTAGE]=wt_monthly[m];
