@@ -329,12 +329,8 @@ public:
 	static bool  lcd_dimmed;
 	#endif
 	
-	#if defined(USE_ROTARY_ENCODER)
-
-	volatile int encoderPos = 0;
-	volatile int lastEncoderPos = 0;
-	static const int encoderTable[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
-
+	#if defined(USE_ROTARY_ENCODER)	
+	static const int encoderTable[];
 	#endif
 
 	static unsigned char  button_timeout;    // button timeout
