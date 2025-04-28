@@ -64,12 +64,16 @@ unsigned char    OpenSprinkler::weather_update_flag;
 bool OpenSprinkler::lcd_dimmed = false;
 #endif
 #if defined(USE_ROTARY_ENCODER)
-volatile int OpenSprinkler::encoderPos = 0;
-volatile int OpenSprinkler::lastEncoderPos = 0;
-volatile bool OpenSprinkler::buttonPressed = false;
+volatile int encoderPos = 0;
+volatile int encoderValue;
+volatile int lastEncoderPos = 0;
+volatile int lastEncoded = 0;
+volatile bool buttonPressed = false;
 
-byte OpenSprinkler::current_menu_item = 0;
-byte OpenSprinkler::current_submenu_item = 0;
+const int OpenSprinkler::encoderTable[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
+
+byte current_menu_item = 0;
+byte current_submenu_item = 0;
 #endif
 
 // todo future: the following attribute bytes are for backward compatibility
@@ -1083,7 +1087,7 @@ void OpenSprinkler::begin() {
 		pinMode(PIN_BUTTON_2, INPUT_PULLUP);
 		pinMode(PIN_BUTTON_3, INPUT_PULLUP);
 
-		attachInterrupt(digitalPinToInterrupt(ROTARY_ENCODER_A_PIN), OpenSprinkler::handleEncoder, CHANGE);
+		attachInterrupt(digitalPinToInterrupt(ROTARY_ENCODER_A_PIN), OpenSprinkler::handleRotaryEncoderRotate, CHANGE);
 
 	#endif // Button PINs configuration
 
@@ -2760,7 +2764,7 @@ void OpenSprinkler::options_setup() {
 	// rotary encoder test
 	// 4 pages: setup options, device password reset, factory reset, internal test
 	// "on hold" will activate a function, normal click is "enter" or "hold for yes"
-	byte button = button_read(BUTTON_WAIT_NONE);
+	button = button_read(BUTTON_WAIT_NONE);
 	if ( (button & BUTTON_MASK) == BUTTON_2 ) {
 		button = 0;
 		ui_boot_menu(bootMenu, BOOT_MENU_ITEMS);	
@@ -3355,13 +3359,13 @@ unsigned char OpenSprinkler::button_read_busy(unsigned char pin_butt, unsigned c
 
 // interrupt driven encoder read
 void OpenSprinkler::handleRotaryEncoderRotate() {
-	static int lastEncoded = 0;
-  	static int encoderValue = 0;
+	lastEncoded = 0;
+  	encoderValue = 0;
 	
-	int MSB = digitalRead(ENCODER_PIN_A);
-  	int LSB = digitalRead(ENCODER_PIN_B);
+	int MSB = digitalRead(ROTARY_ENCODER_A_PIN);
+  	int LSB = digitalRead(ROTARY_ENCODER_B_PIN);
 
-  	 int encoded = (MSB << 1) | LSB;
+  	int encoded = (MSB << 1) | LSB;
 	int sum = (lastEncoded << 2) | encoded;
 	int increment = encoderTable[sum & 0x0F];
 
