@@ -80,6 +80,8 @@ typedef unsigned long ulong;
 #define NOTIFY_RAINDELAY       0x0080
 #define NOTIFY_STATION_ON      0x0100
 #define NOTIFY_FLOW_ALERT      0x0200
+#define NOTIFY_STATION_ALL     0x0120
+#define PRINT_PROGRAMS         0x0130
 
 /** HTTP request macro defines */
 #define HTTP_RQT_SUCCESS       0

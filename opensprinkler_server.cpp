@@ -1098,6 +1098,46 @@ void server_json_options(OTF_PARAMS_DEF) {
 	handle_return(HTML_OK);
 }
 
+char* printPrograms() {
+  //String test;
+  static char test[1000];
+  //strcat_P(payload, PSTR("{\"state\":1"));
+  snprintf_P(test, 1000, PSTR("{\"nprogs\":%D,\"nboards\":%D,\"mnp\":%D,\"mnst\":%D,\"pnsize\":%D,\"pd\":["), pd.nprograms, os.nboards, MAX_NUM_PROGRAMS, MAX_NUM_STARTTIMES, PROGRAM_NAME_SIZE);
+  unsigned char pid, i;
+  ProgramStruct prog;
+  for(pid=0;pid<pd.nprograms;pid++) {
+    pd.read(pid, &prog);
+    if (prog.type == PROGRAM_TYPE_INTERVAL && prog.days[1] >= 1) {
+      pd.drem_to_relative(prog.days);
+    }
+
+    unsigned char bytedata = *(char*)(&prog);
+    snprintf_P(test+strlen(test), 1000, PSTR("[%D,%D,%D,["), bytedata, prog.days[0], prog.days[1]);
+    // start times data
+    for (i=0;i<(MAX_NUM_STARTTIMES-1);i++) {
+      snprintf_P(test+strlen(test), 1000, PSTR("%D,"), prog.starttimes[i]);
+    }
+    snprintf_P(test+strlen(test), 1000, PSTR("%D],["), prog.starttimes[i]);  // this is the last element
+    // station water time
+    for (i=0; i<os.nstations-1; i++) {
+      snprintf_P(test+strlen(test), 1000, PSTR("%D,"),(unsigned long)prog.durations[i]);
+    }
+    snprintf_P(test+strlen(test), 1000, PSTR("%D],\""),(unsigned long)prog.durations[i]); // this is the last element
+    // program name
+    strncpy(tmp_buffer, prog.name, PROGRAM_NAME_SIZE);
+    tmp_buffer[PROGRAM_NAME_SIZE] = 0;  // make sure the string ends
+    snprintf_P(test+strlen(test), 1000, PSTR("%S\",[%D,%D,%D]]"), tmp_buffer,prog.en_daterange,prog.daterange[0],prog.daterange[1]);
+    if(pid!=pd.nprograms-1) {
+      snprintf_P(test+strlen(test), 1000, PSTR(","));
+    }
+  }
+  snprintf_P(test+strlen(test), 1000, PSTR("]}"));
+
+  DEBUG_PRINTLN(test);
+  return test;
+}
+
+
 void server_json_programs_main(OTF_PARAMS_DEF) {
 
 	bfill.emit_p(PSTR("\"nprogs\":$D,\"nboards\":$D,\"mnp\":$D,\"mnst\":$D,\"pnsize\":$D,\"pd\":["),
@@ -1140,6 +1180,7 @@ void server_json_programs_main(OTF_PARAMS_DEF) {
 
 /** Output program data */
 void server_json_programs(OTF_PARAMS_DEF) {
+
 #if defined(USE_OTF)
 	if(!process_password(OTF_PARAMS)) return;
 	rewind_ether_buffer();

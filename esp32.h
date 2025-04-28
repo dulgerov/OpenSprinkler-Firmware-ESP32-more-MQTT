@@ -1,6 +1,8 @@
 #ifndef _ESP32_H
 #define _ESP32_H
 
+#define ESP32
+
 #if defined(ESP32)
 
 // this will enable SPIFFS compatiblity => no "real" folders
@@ -21,7 +23,7 @@
 // chose LCD type: 0.96 probably SSD1306, 1.3" is probably SH1106
 // moved to defines.h
 //#define LCD_SH1106
-//#define LCD_SSD1306
+#define LCD_SSD1306
 
 #define MDNS_NAME "opensprinkler" // mDNS name for OS controler
 #define OS_HW_VERSION    (OS_HW_VERSION_BASE+40)
@@ -29,9 +31,13 @@
 //#define RFTX // uncoment when planning to use RX controler
 //#define ETHPORT // uncoment when palnning to use wired etherner
 
+
 // override of default I2C pins 21/22
-#define SDA_PIN SDA
-#define SCL_PIN SCL
+//#define SDA_PIN 22 // WROVER-E
+//#define SCL_PIN 23 // WROVER-E
+
+#define SDA_PIN 19 // S3
+#define SCL_PIN 20 // S3
 #define LCD_I2CADDR      0x3c // 128x64 OLED display I2C address
 
 #define IOEXP_PIN        0x99 // base for pins on main IO expander
@@ -66,16 +72,23 @@
   extern unsigned char PIN_IOEXP_INT;
 
 
-  #define E0_PIN_BUTTON_1      18 // button 1 - v1pr 18, default 25
-  #define E0_PIN_BUTTON_2      5 // button 2 - v1pr 5, default 0
-  #define E0_PIN_BUTTON_3      17 // button 3 - v1pr 17, default 26
+//  #define E0_PIN_BUTTON_1      26 // button 1 - WROVER-E
+//  #define E0_PIN_BUTTON_2      15 // button 2 - WROVER-E
+//  #define E0_PIN_BUTTON_3      33 // button 3 - WROVER-E
+
+  #define E0_PIN_BUTTON_1      12 // button 1 - S3
+  #define E0_PIN_BUTTON_2      13 // button 2 - S3
+  #define E0_PIN_BUTTON_3      14 // button 3 - S3
   #define E0_PIN_RFRX          255
   #define E0_PIN_RFTX          255
   #define E0_PIN_BOOST         255 // special HW needed
   #define E0_PIN_BOOST_EN      255 // special HW needed
   #define E0_PIN_LATCH_COM     255 // not needed for ESP32
-  #define E0_PIN_SENSOR1       39 // sensor 1 - v1pr 39, default 36
-  #define E0_PIN_SENSOR2       33 // sensor 2  - v1pr 33, default 2
+//  #define E0_PIN_SENSOR1       34 // sensor 1 - WROVER-E
+//  #define E0_PIN_SENSOR2       35 // sensor 2  - WROVER-E
+  
+  #define E0_PIN_SENSOR1       4 // sensor 1 - S3
+  #define E0_PIN_SENSOR2       5 // sensor 2  - S3
   #define E0_PIN_IOEXP_INT     255 // not needed for ESP32
  
   #define PIN_ETHER_CS         255 // ENC28J60 CS (chip select pin) is 16 on OS 3.2.
@@ -83,33 +96,41 @@
   #define USE_IOEXP_SR 0 // use Shift-register as station setting - uncomment this to use built-in gpio style, default 0
   
   // default
-  // #define ON_BOARD_GPIN_LIST     {12,13,14,15,16,255,255,255} //  ESP32 on board pins to be used as sections, 255 = pin not defined
-  // v1pr's board, these are the GPIO pins user for stations - IOEXP PCF/PCA not (yet) supported
-  #define ON_BOARD_GPIN_LIST     {2,4,255,255,255,255,255,255} // was 2,4
+//  #define ON_BOARD_GPIN_LIST     {21,19,18,5,255,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - WROVER-E
+  #define ON_BOARD_GPIN_LIST     {6,7,15,16,17,18,8,3} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - S3
+//  #define ON_BOARD_GPIN_LIST     {6,7,15,16,255,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - S3
   #define PIN_FREE_LIST     {} // no free GPIO pin at the moment
 
   // if set to a real ADC pin, than it means the board has current sensor capabilities
-  #define PIN_CURR_SENSE      255 // not used on v1pr's board, so 255, defaut 39
+//  #define PIN_CURR_SENSE      39 // WROVER-E
+
+  #define PIN_CURR_SENSE      10 // S3
   
   #define STATION_LOGIC 1 // Zone output logic for relays - 1 => HIGH in ON, 0 => LOW is ON - v1pr board: 1
 
   // Rotary Encoder instead of buttons - not used for now, testing/development
-  #define USE_ROTARY_ENCODER
-  #define ROTARY_ENCODER_A_PIN 35 // must be interrupt capable PIN!
-  #define ROTARY_ENCODER_B_PIN 34
-  #define ROTARY_ENCODER_BUTTON_PIN 5 // this should be same, BUTTON_2, default 33
+  //#define USE_ROTARY_ENCODER
+  //#define ROTARY_ENCODER_A_PIN 35 // must be interrupt capable PIN!
+  //#define ROTARY_ENCODER_B_PIN 34
+  //#define ROTARY_ENCODER_BUTTON_PIN 5 // this should be same, BUTTON_2, default 33
   
-  #define BOOT_MENU_V2
+  //#define BOOT_MENU_V2
 
-  #define SEPARATE_MASTER_VALVE 19
+  //#define SEPARATE_MASTER_VALVE 9
 
   // 74HC595 shift reg
   // #define IOEXP_SR_OE_PIN // output enable pin, not used now
-  #define IOEXP_SR_DATA_PIN 25 // DS default 18
-  #define IOEXP_SR_CLK_PIN 27 // SH_CP
-  #define IOEXP_SR_LATCH_PIN 32 // ST_CP
+//  #define IOEXP_SR_DATA_PIN 24 // WROVER-E
+//  #define IOEXP_SR_CLK_PIN 27 // WROVER-E
 
-  #define SYS_STATUS_LED_PIN  13
+  #define IOEXP_SR_DATA_PIN 47 // S3
+  #define IOEXP_SR_CLK_PIN 48 // S3
+  
+  #define IOEXP_SR_LATCH_PIN 255
+
+//  #define SYS_STATUS_LED_PIN  25 // WROVER-E
+
+  #define SYS_STATUS_LED_PIN  38 // S3
 
   // this it not nice, should be cleaned up
  	/* Original OS30 pin defines  - native definitions, should not be here

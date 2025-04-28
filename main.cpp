@@ -76,6 +76,8 @@
 	#endif
 #endif
 
+void manualStatus();
+
 void manual_start_program(unsigned char, unsigned char);
 
 // Small variations have been added to the timing values below
@@ -407,11 +409,11 @@ void do_setup() {
 	  for( i=0; i<8; i++ ){
 		if(pin_list[i] !=255){
 		  pinMode(pin_list[i], OUTPUT);
-	          if ( STATION_LOGIC == 1 ) {
-			digitalWrite(pin_list[i], LOW);
-	          } else if ( STATION_LOGIC == 0 ) {
-			digitalWrite(pin_list[i], HIGH);
-	          }
+      if ( STATION_LOGIC == 1 ) {
+        digitalWrite(pin_list[i], LOW);
+      } else if ( STATION_LOGIC == 0 ) {
+        digitalWrite(pin_list[i], HIGH);
+      }
 		}
 	  }
 
@@ -1506,6 +1508,10 @@ void reset_all_stations() {
 	}
 }
 
+void manualStatus() {
+  DEBUG_PRINTLN("Manual status requested");
+  notif.add(0x0120, 1, 1);
+}
 
 /** Manually start a program
  * If pid==0, this is a test program (1 minute per station)

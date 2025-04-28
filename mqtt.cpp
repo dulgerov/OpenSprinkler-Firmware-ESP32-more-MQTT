@@ -28,6 +28,7 @@
 	#elif defined(ESP32)
 		// no wired ethernet support
 		#include <WiFi.h>
+    #include <HTTPClient.h>
 	#else
 		#include <Ethernet.h>
 	#endif
@@ -35,6 +36,7 @@
 	#include <PubSubClient.h>
 
 	struct PubSubClient *mqtt_client = NULL;
+
 
 #else
 	#include <time.h>
@@ -51,6 +53,7 @@
 #include "types.h"
 #include "mqtt.h"
 #include "ArduinoJson.hpp"
+#include "notifier.h"
 
 // Debug routines to help identify any blocking of the event loop for an extended period
 
@@ -100,6 +103,8 @@ bool OSMqtt::_enabled = false;          // Flag indicating whether MQTT is enabl
 char OSMqtt::_pub_topic[MQTT_MAX_TOPIC_LEN + 1] = {0}; // topic for publishing data
 char OSMqtt::_sub_topic[MQTT_MAX_TOPIC_LEN + 1] = {0}; // topic for subscribing
 bool OSMqtt::_done_subscribed = false;		//Flag indicating if command topic has been subscribed to
+
+HTTPClient http;
 
 //******************************** HELPER FUNCTIONS ********************************// 
 
@@ -299,6 +304,9 @@ void runOnceProgram(char *message){
 	return;
 }
 
+
+// handles /jp command
+
 //****************************** MQTT FUNCTIONS ******************************//
 
 // Initialise the client libraries and event handlers.
@@ -484,6 +492,7 @@ int OSMqtt::_init(void) {
 
 	mqtt_client = new PubSubClient(*client);
 	mqtt_client->setKeepAlive(OS_MQTT_KEEPALIVE);
+  mqtt_client->setBufferSize(10000);
 
 	if (mqtt_client == NULL) {
 		DEBUG_LOGF("MQTT Init: Failed to initialise client\r\n");
@@ -529,6 +538,8 @@ int OSMqtt::_disconnect(void) {
 bool OSMqtt::_connected(void) { return mqtt_client->connected(); }
 
 int OSMqtt::_publish(const char *topic, const char *payload) {
+	DEBUG_PRINTLN("PL");
+  DEBUG_PRINTLN(payload);
 	String total_topic(_pub_topic); // concatenate root topic with specific topic
 	total_topic += "/";
 	total_topic += topic;
@@ -538,6 +549,12 @@ int OSMqtt::_publish(const char *topic, const char *payload) {
 	}
 	return MQTT_SUCCESS;
 }
+
+#define OTF_PARAMS_DEF
+
+void manualStatus();
+void printPrograms();
+//void server_json_programs();
 
 void subscribe_callback(const char *topic, unsigned char *payload, unsigned int length) {
 	DEBUG_LOGF("Subscribe Callback\r\n");
@@ -557,7 +574,13 @@ void subscribe_callback(const char *topic, unsigned char *payload, unsigned int 
 		}
 	}else if(message[0]=='m' && message[1]=='p'){
 		programStart(message);
-	}else{
+	}else if(message[0]=='m' && message[1]=='s'){
+    manualStatus();
+  }else if(message[0]=='j' && message[1]=='p'){
+    //printPrograms();
+    NotifQueue notif; // NotifQueue object
+    notif.add(PRINT_PROGRAMS, 1, 1);
+  }else{
 		DEBUG_LOGF("Unsupported mqtt subscribe request\r\n");
 		return;
 	}

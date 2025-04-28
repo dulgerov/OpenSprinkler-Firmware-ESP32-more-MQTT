@@ -84,6 +84,8 @@ void ProgramData::dequeue(unsigned char qid) {
 /** Load program count from program file */
 void ProgramData::load_count() {
 	nprograms = file_read_byte(PROG_FILENAME, 0);
+  DEBUG_PRINTLN("PROGRAM COUNT");
+  DEBUG_PRINTLN(nprograms);
 }
 
 /** Save program count to program file */

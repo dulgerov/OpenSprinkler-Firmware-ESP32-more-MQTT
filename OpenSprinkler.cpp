@@ -64,16 +64,12 @@ unsigned char    OpenSprinkler::weather_update_flag;
 bool OpenSprinkler::lcd_dimmed = false;
 #endif
 #if defined(USE_ROTARY_ENCODER)
-volatile int encoderPos = 0;
-volatile int encoderValue;
-volatile int lastEncoderPos = 0;
-volatile int lastEncoded = 0;
-volatile bool buttonPressed = false;
+volatile int OpenSprinkler::encoderPos = 0;
+volatile int OpenSprinkler::lastEncoderPos = 0;
+volatile bool OpenSprinkler::buttonPressed = false;
 
-const int OpenSprinkler::encoderTable[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
-
-byte current_menu_item = 0;
-byte current_submenu_item = 0;
+byte OpenSprinkler::current_menu_item = 0;
+byte OpenSprinkler::current_submenu_item = 0;
 #endif
 
 // todo future: the following attribute bytes are for backward compatibility
@@ -1087,7 +1083,7 @@ void OpenSprinkler::begin() {
 		pinMode(PIN_BUTTON_2, INPUT_PULLUP);
 		pinMode(PIN_BUTTON_3, INPUT_PULLUP);
 
-		attachInterrupt(digitalPinToInterrupt(ROTARY_ENCODER_A_PIN), OpenSprinkler::handleRotaryEncoderRotate, CHANGE);
+		attachInterrupt(digitalPinToInterrupt(ROTARY_ENCODER_A_PIN), OpenSprinkler::handleEncoder, CHANGE);
 
 	#endif // Button PINs configuration
 
@@ -1583,8 +1579,8 @@ void OpenSprinkler::apply_all_station_bits() {
 			engage_booster = 0;
 		}
 
-		DEBUG_PRINT("IOEXP type: ");
-		DEBUG_PRINTLN(drio->type);
+		//DEBUG_PRINT("IOEXP type: ");
+		//DEBUG_PRINTLN(drio->type);
 		// DEBUG_PRINTLN(station_bits[0]);
 
 		// Handle driver board (on main controller)
@@ -1601,34 +1597,34 @@ void OpenSprinkler::apply_all_station_bits() {
 		}
 		#if defined(ESP32)
 		 else if(drio->type == IOEXP_TYPE_BUILD_IN_GPIO  || drio->type == IOEXP_TYPE_SR){
-			DEBUG_PRINTLN("ESP32 IOEXP");
+			//DEBUG_PRINTLN("ESP32 IOEXP");
 			// stations_bits[0] holds the master station zones as a byte
 			if (STATION_LOGIC) {
-				DEBUG_PRINTLN("HIGH = On station logic");
+				//DEBUG_PRINTLN("HIGH = On station logic");
 				#if defined(SEPARATE_MASTER_VALVE)
 				// DEBUG_PRINT("Separate master on GPIO ");
 				// DEBUG_PRINTLN(SEPARATE_MASTER_VALVE);
 				// DEBUG_PRINTLN(station_bits[0]);
 				if ( station_bits[0] > 0 ) {
-					DEBUG_PRINTLN("Turning MASTER VALVE On");
+					//DEBUG_PRINTLN("Turning MASTER VALVE On");
 					digitalWrite(SEPARATE_MASTER_VALVE,HIGH);
 				} else {
-					DEBUG_PRINTLN("Turning MASTER VALVE Off");
+					//DEBUG_PRINTLN("Turning MASTER VALVE Off");
 					digitalWrite(SEPARATE_MASTER_VALVE,LOW);
 				}
 				#endif
 
-				DEBUG_PRINT("Setting i2c stations... ");
+				//DEBUG_PRINT("Setting i2c stations... ");
 				drio->i2c_write(255, station_bits[0]);
-				DEBUG_PRINTLN("done");
+				//DEBUG_PRINTLN("done");
 			} else {
 				DEBUG_PRINTLN("LOW = On station logic");
 				#if defined(SEPARATE_MASTER_VALVE)
 				if ( station_bits[0] > 0 ) {
-					DEBUG_PRINTLN("Turning MASTER VALVE On");
+					//DEBUG_PRINTLN("Turning MASTER VALVE On");
 					digitalWrite(SEPARATE_MASTER_VALVE,LOW);
 				} else {
-					DEBUG_PRINTLN("Turning MASTER VALVE Off");
+					//DEBUG_PRINTLN("Turning MASTER VALVE Off");
 					digitalWrite(SEPARATE_MASTER_VALVE,HIGH);
 				}
 				#endif
@@ -1637,12 +1633,12 @@ void OpenSprinkler::apply_all_station_bits() {
 		} 
 		#endif
 
-		DEBUG_PRINT("Main station set, doing expanders");
+		//DEBUG_PRINT("Main station set, doing expanders");
 
 		// Handle expansion boards
 		for(int i=0;i<MAX_EXT_BOARDS/2;i++) {
-			DEBUG_PRINT(" EXP_");
-			DEBUG_PRINT(i);
+			//DEBUG_PRINT(" EXP_");
+			//DEBUG_PRINT(i);
 			uint16_t data = station_bits[i*2+2];
 			data = (data<<8) + station_bits[i*2+1];
 			if(expanders[i]->type==IOEXP_TYPE_9555) {
@@ -1652,7 +1648,7 @@ void OpenSprinkler::apply_all_station_bits() {
 			}
 		}
 
-		DEBUG_PRINTLN(" done");
+		//DEBUG_PRINTLN(" done");
 	}
 
 #else
@@ -2764,7 +2760,7 @@ void OpenSprinkler::options_setup() {
 	// rotary encoder test
 	// 4 pages: setup options, device password reset, factory reset, internal test
 	// "on hold" will activate a function, normal click is "enter" or "hold for yes"
-	button = button_read(BUTTON_WAIT_NONE);
+	byte button = button_read(BUTTON_WAIT_NONE);
 	if ( (button & BUTTON_MASK) == BUTTON_2 ) {
 		button = 0;
 		ui_boot_menu(bootMenu, BOOT_MENU_ITEMS);	
@@ -3359,13 +3355,13 @@ unsigned char OpenSprinkler::button_read_busy(unsigned char pin_butt, unsigned c
 
 // interrupt driven encoder read
 void OpenSprinkler::handleRotaryEncoderRotate() {
-	lastEncoded = 0;
-  	encoderValue = 0;
+	static int lastEncoded = 0;
+  	static int encoderValue = 0;
 	
-	int MSB = digitalRead(ROTARY_ENCODER_A_PIN);
-  	int LSB = digitalRead(ROTARY_ENCODER_B_PIN);
+	int MSB = digitalRead(ENCODER_PIN_A);
+  	int LSB = digitalRead(ENCODER_PIN_B);
 
-  	int encoded = (MSB << 1) | LSB;
+  	 int encoded = (MSB << 1) | LSB;
 	int sum = (lastEncoded << 2) | encoded;
 	int increment = encoderTable[sum & 0x0F];
 

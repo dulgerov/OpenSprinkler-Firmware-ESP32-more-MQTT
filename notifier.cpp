@@ -36,6 +36,7 @@ extern char tmp_buffer[];
 extern char ether_buffer[];
 extern float flow_last_gpm;
 void remote_http_callback(char*);
+char* printPrograms();
 
 bool is_notif_enabled(uint16_t type) {
 	uint16_t notif = (uint16_t)os.iopts[IOPT_NOTIF_ENABLE] | ((uint16_t)os.iopts[IOPT_NOTIF2_ENABLE] << 8);
@@ -261,6 +262,49 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 				if(email_enabled) { email_message.subject += PSTR("station event"); }
 			}
 			break;
+
+    case  NOTIFY_STATION_ALL:
+
+      DEBUG_PRINTLN("Sending manual status");
+      if (os.mqtt.enabled()) {
+            int i;
+            String pinstatus;
+            String pinstatuses = "";
+            unsigned int pin_list[] = ON_BOARD_GPIN_LIST;
+            for( i=0; i<8; i++ ){
+              if(pin_list[i] !=255){
+                if(digitalRead(pin_list[i]) == HIGH or digitalRead(pin_list[i]) == 1) {
+                  pinstatus = '1';
+                } else {
+                  pinstatus = '0';
+                }
+                pinstatuses = pinstatuses+pinstatus+",";
+              }
+            }
+            //DEBUG_PRINTLN(pinstatuses.length()-1);
+            pinstatuses.remove(pinstatuses.length()-1);
+
+            snprintf_P(topic, PUSH_TOPIC_LEN, PSTR("station/%s"), "all");
+            snprintf_P(payload, PUSH_PAYLOAD_LEN, PSTR("{\"states\": \"%S\"}"), pinstatuses.c_str());
+      }
+
+      // todo: add IFTTT support for this event as well.
+      // currently no support due to the number of events exceeds 8 so need to use more than 1 byte
+      break;
+
+    case  PRINT_PROGRAMS:
+
+      DEBUG_PRINTLN("Sending programs");
+      if (os.mqtt.enabled()) {
+            char* programs = printPrograms();
+            DEBUG_PRINTLN(programs);
+            snprintf_P(topic, PUSH_TOPIC_LEN, PSTR("programs/%s"), "all");
+            snprintf_P(payload, strlen(programs)+1, PSTR("%S"), programs);
+      }
+
+      // todo: add IFTTT support for this event as well.
+      // currently no support due to the number of events exceeds 8 so need to use more than 1 byte
+      break;
 
 		case NOTIFY_FLOW_ALERT:{
 			//First determine if a Flow Alert should be sent based on flow amount and setpoint
