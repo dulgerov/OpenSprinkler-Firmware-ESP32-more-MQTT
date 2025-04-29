@@ -64,7 +64,6 @@
 		extern SdFat sd;
 	#endif
 #else
-	#include <stdarg.h>
 	#include <stdlib.h>
 	#include "etherport.h"
 #endif
@@ -1099,10 +1098,10 @@ void server_json_options(OTF_PARAMS_DEF) {
 }
 
 char* printPrograms() {
-  //String test;
-  static char test[1000];
-  //strcat_P(payload, PSTR("{\"state\":1"));
-  snprintf_P(test, 1000, PSTR("{\"nprogs\":%D,\"nboards\":%D,\"mnp\":%D,\"mnst\":%D,\"pnsize\":%D,\"pd\":["), pd.nprograms, os.nboards, MAX_NUM_PROGRAMS, MAX_NUM_STARTTIMES, PROGRAM_NAME_SIZE);
+  
+  static char test[10000];
+  
+  snprintf_P(test, TMP_BUFFER_SIZE, PSTR("{\"nprogs\":%D,\"nboards\":%D,\"mnp\":%D,\"mnst\":%D,\"pnsize\":%D,\"pd\":["), pd.nprograms, os.nboards, MAX_NUM_PROGRAMS, MAX_NUM_STARTTIMES, PROGRAM_NAME_SIZE);
   unsigned char pid, i;
   ProgramStruct prog;
   for(pid=0;pid<pd.nprograms;pid++) {
@@ -1112,31 +1111,169 @@ char* printPrograms() {
     }
 
     unsigned char bytedata = *(char*)(&prog);
-    snprintf_P(test+strlen(test), 1000, PSTR("[%D,%D,%D,["), bytedata, prog.days[0], prog.days[1]);
+    snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("[%D,%D,%D,["), bytedata, prog.days[0], prog.days[1]);
     // start times data
     for (i=0;i<(MAX_NUM_STARTTIMES-1);i++) {
-      snprintf_P(test+strlen(test), 1000, PSTR("%D,"), prog.starttimes[i]);
+      snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("%D,"), prog.starttimes[i]);
     }
-    snprintf_P(test+strlen(test), 1000, PSTR("%D],["), prog.starttimes[i]);  // this is the last element
+    snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("%D],["), prog.starttimes[i]);  // this is the last element
     // station water time
     for (i=0; i<os.nstations-1; i++) {
-      snprintf_P(test+strlen(test), 1000, PSTR("%D,"),(unsigned long)prog.durations[i]);
+      snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("%D,"),(unsigned long)prog.durations[i]);
     }
-    snprintf_P(test+strlen(test), 1000, PSTR("%D],\""),(unsigned long)prog.durations[i]); // this is the last element
+    snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("%D],\""),(unsigned long)prog.durations[i]); // this is the last element
     // program name
     strncpy(tmp_buffer, prog.name, PROGRAM_NAME_SIZE);
     tmp_buffer[PROGRAM_NAME_SIZE] = 0;  // make sure the string ends
-    snprintf_P(test+strlen(test), 1000, PSTR("%S\",[%D,%D,%D]]"), tmp_buffer,prog.en_daterange,prog.daterange[0],prog.daterange[1]);
+    snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("%S\",[%D,%D,%D]]"), tmp_buffer,prog.en_daterange,prog.daterange[0],prog.daterange[1]);
     if(pid!=pd.nprograms-1) {
-      snprintf_P(test+strlen(test), 1000, PSTR(","));
+      snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR(","));
     }
   }
-  snprintf_P(test+strlen(test), 1000, PSTR("]}"));
+  snprintf_P(test+strlen(test), TMP_BUFFER_SIZE, PSTR("]}"));
 
-  DEBUG_PRINTLN(test);
+  //DEBUG_PRINTLN("printPrograms FN");
+  //DEBUG_PRINTLN(test);
   return test;
 }
 
+void changeProgram(char* mqttcmnd) {
+
+  unsigned char i;
+
+  ProgramStruct prog;
+
+  // parse program index
+  if (!findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("pid"), true)) DEBUG_PRINTLN("No pid via MQTT");
+
+  int pid=atoi(tmp_buffer);
+  if (!(pid>=-1 && pid< pd.nprograms)) DEBUG_PRINTLN("No valid sub zero pid via MQTT");
+
+  // check if "en" parameter is present
+  if (findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("en"), true)) {
+    if(pid<0) DEBUG_PRINTLN("No old pid via MQTT");
+    pd.set_flagbit(pid, PROGRAMSTRUCT_EN_BIT, (tmp_buffer[0]=='0')?0:1);
+    DEBUG_PRINTLN("EN success MQTT");
+  }
+
+  // check if "uwt" parameter is present
+  if (findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("uwt"), true)) {
+    if(pid<0) DEBUG_PRINTLN("No old pid via MQTT");
+    pd.set_flagbit(pid, PROGRAMSTRUCT_UWT_BIT, (tmp_buffer[0]=='0')?0:1);
+    DEBUG_PRINTLN("UWT success MQTT");
+  }
+
+  // parse program name
+  if (findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("name"), true)) {
+    #if !defined(USE_OTF)
+    urlDecode(tmp_buffer);
+    #endif
+    strReplaceQuoteBackslash(tmp_buffer);
+    strncpy(prog.name, tmp_buffer, PROGRAM_NAME_SIZE);
+  } else {
+    strcpy_P(prog.name, _str_program);
+    snprintf(prog.name+8, PROGRAM_NAME_SIZE - 8, "%d", (pid==-1)? (pd.nprograms+1): (pid+1));
+  }
+
+  // parse program start date and end date
+  if (findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("from"), true)) {
+    int16_t date = atoi(tmp_buffer);
+    if(!isValidDate(date)) DEBUG_PRINTLN("No valid date via MQTT");
+    prog.daterange[0] = date;
+    if (findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("to"), true)) {
+      date = atoi(tmp_buffer);
+      if(!isValidDate(date)) DEBUG_PRINTLN("No valid date via MQTT");
+      prog.daterange[1] = date;
+    } else {
+      DEBUG_PRINTLN("DATA MISSING MQTT");
+    }
+  }
+
+
+#if !defined(USE_OTF)
+  if(p) urlDecode(p);
+#endif
+
+
+#if defined(USE_OTF)
+  if(!findKeyVal(mqttcmnd,tmp_buffer,TMP_BUFFER_SIZE, "v",false)) DEBUG_PRINTLN("No v via MQTT");
+  char *pv = tmp_buffer+1;
+#else
+  // parse ad-hoc v=[...
+  // search for the start of v=[
+  char *pv;
+  boolean found=false;
+
+  for(pv=p;(*pv)!=0 && pv<p+100;pv++) {
+    if(strncmp(pv, "v=[", 3)==0) {
+      found=true;
+      break;
+    }
+  }
+
+  if(!found)  DEBUG_PRINTLN("No pv via MQTT");
+  pv+=3;
+#endif
+
+  // parse headers
+  *(char*)(&prog) = parse_listdata(&pv);
+  prog.days[0]= parse_listdata(&pv);
+  prog.days[1]= parse_listdata(&pv);
+  
+  if (prog.type == PROGRAM_TYPE_INTERVAL) {
+    if (prog.days[1] == 0) DEBUG_PRINTLN("No prog days via MQTT")
+    else if (prog.days[1] >= 1) {
+      // process interval day remainder (relative-> absolute)
+      pd.drem_to_absolute(prog.days);
+    }
+  }
+
+  // parse start times
+  pv++; // this should be a '['
+  for (i=0;i<MAX_NUM_STARTTIMES;i++) {
+    prog.starttimes[i] = parse_listdata(&pv);
+  }
+  pv++; // this should be a ','
+  pv++; // this should be a '['
+  for (i=0;i<os.nstations;i++) {
+    uint16_t pre = parse_listdata(&pv);
+    prog.durations[i] = pre;
+  }
+  pv++; // this should be a ']'
+  pv++; // this should be a ']'
+  // parse program name
+
+  // i should be equal to os.nstations at this point
+  for(;i<MAX_NUM_STATIONS;i++) {
+    prog.durations[i] = 0;     // clear unused field
+  }
+
+  if (pid==-1) {
+    if(!pd.add(&prog)) DEBUG_PRINTLN("Added program via MQTT");
+  } else {
+    if(!pd.modify(pid, &prog)) DEBUG_PRINTLN("Changed program via MQTT");
+  }
+
+}
+
+void deleteProgram(char* mqttcmnd) {
+
+  if (!findKeyVal(mqttcmnd, tmp_buffer, TMP_BUFFER_SIZE, PSTR("pid"), true))
+      DEBUG_PRINTLN("Missing data to delete via MQTT");
+
+  int pid=atoi(tmp_buffer);
+  if (pid == -1) {
+    pd.eraseall();
+  } else if (pid < pd.nprograms) {
+    pd.del(pid);
+  } else {
+    DEBUG_PRINTLN("OUTOFBOUND program via MQTT");
+    //handle_return(HTML_DATA_OUTOFBOUND);
+  }
+
+  DEBUG_PRINTLN("Deleted program via MQTT");
+  //handle_return(HTML_SUCCESS);
+}
 
 void server_json_programs_main(OTF_PARAMS_DEF) {
 

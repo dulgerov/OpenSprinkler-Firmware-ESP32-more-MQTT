@@ -116,7 +116,10 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 		return;
 	}
 	static char topic[PUSH_TOPIC_LEN+1];
-	static char payload[PUSH_PAYLOAD_LEN+1];
+	//static char payload[PUSH_PAYLOAD_LEN+1];
+  static char payload[10000];
+  
+  
 	char* postval = tmp_buffer+1; // +1 so we can fit a opening { before the loaded config
 
 	// check if ifttt key exists and also if the enable bit is set
@@ -297,9 +300,15 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
       DEBUG_PRINTLN("Sending programs");
       if (os.mqtt.enabled()) {
             char* programs = printPrograms();
-            DEBUG_PRINTLN(programs);
+            //DEBUG_PRINTLN(programs);
             snprintf_P(topic, PUSH_TOPIC_LEN, PSTR("programs/%s"), "all");
+            DEBUG_PRINTLN("THE TOPIC");
+            DEBUG_PRINTLN(topic);
+            DEBUG_PRINTLN(strlen(programs));
             snprintf_P(payload, strlen(programs)+1, PSTR("%S"), programs);
+            //snprintf_P(payload, PUSH_PAYLOAD_LEN, PSTR("%S"), programs);
+            DEBUG_PRINTLN("THE PAYLOAD");
+            DEBUG_PRINTLN(payload);
       }
 
       // todo: add IFTTT support for this event as well.
@@ -549,6 +558,11 @@ void push_message(uint16_t type, uint32_t lval, float fval, uint8_t bval) {
 	}
 
 	if (os.mqtt.enabled() && strlen(topic) && strlen(payload))
+		DEBUG_PRINTLN("NOTIF PUBLISH");
+   DEBUG_PRINTLN("topic");
+		DEBUG_PRINTLN(topic);
+   DEBUG_PRINTLN("payload");
+    DEBUG_PRINTLN(payload);
 		os.mqtt.publish(topic, payload);
 
 	if (ifttt_enabled) {

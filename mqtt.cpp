@@ -34,7 +34,7 @@
 	#endif
 	#define MQTT_SOCKET_TIMEOUT 5
 	#include <PubSubClient.h>
-
+  #define MQTT_MAX_PACKET_SIZE 8192
 	struct PubSubClient *mqtt_client = NULL;
 
 
@@ -492,7 +492,7 @@ int OSMqtt::_init(void) {
 
 	mqtt_client = new PubSubClient(*client);
 	mqtt_client->setKeepAlive(OS_MQTT_KEEPALIVE);
-  mqtt_client->setBufferSize(10000);
+  mqtt_client->setBufferSize(8192);
 
 	if (mqtt_client == NULL) {
 		DEBUG_LOGF("MQTT Init: Failed to initialise client\r\n");
@@ -554,6 +554,8 @@ int OSMqtt::_publish(const char *topic, const char *payload) {
 
 void manualStatus();
 void printPrograms();
+void changeProgram(char* message);
+void deleteProgram(char* message);
 //void server_json_programs();
 
 void subscribe_callback(const char *topic, unsigned char *payload, unsigned int length) {
@@ -571,15 +573,18 @@ void subscribe_callback(const char *topic, unsigned char *payload, unsigned int 
 			manualRun(message);
 		}else if(message[1]=='r'){
 			runOnceProgram(message);
-		}
+		}else if(message[1]=='p'){
+      changeProgram(message);
+    }
 	}else if(message[0]=='m' && message[1]=='p'){
 		programStart(message);
 	}else if(message[0]=='m' && message[1]=='s'){
     manualStatus();
   }else if(message[0]=='j' && message[1]=='p'){
-    //printPrograms();
     NotifQueue notif; // NotifQueue object
     notif.add(PRINT_PROGRAMS, 1, 1);
+  }else if(message[0]=='d' && message[1]=='p'){
+    deleteProgram(message);
   }else{
 		DEBUG_LOGF("Unsupported mqtt subscribe request\r\n");
 		return;
@@ -733,7 +738,9 @@ void subscribe_callback(struct mosquitto *mosq, void *obj, const struct mosquitt
 			manualRun(msg);
 		}else if(msg[1]=='r'){
 			runOnceProgram(msg);
-		}
+		}else if(msg[1]=='p'){
+     changeProgram(msg);
+    }
 	}else if(msg[0]=='m' && msg[1]=='p'){
 		programStart(msg);
 	}else{
