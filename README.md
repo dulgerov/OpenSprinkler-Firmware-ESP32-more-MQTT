@@ -1,3 +1,11 @@
+MQTT enhanced version of OpenSprinkler firmware with support added for ESP32
+
+![alt text](https://raw.githubusercontent.com/dulgerov/OpenSprinkler-Firmware-ESP32-more-MQTT/refs/heads/master/images/esp32_opened.jpeg)
+![alt text](https://raw.githubusercontent.com/dulgerov/OpenSprinkler-Firmware-ESP32-more-MQTT/refs/heads/master/images/esp32_closed.jpeg)
+
+
+==== BELOW IS THE INFORMATION FROM v1pr branch repository
+
 # OpenSprinkler firmware with support added for ESP32.
 
 Use at least 6.3.0 from framework-espressi32, since 6.2.0 contains F() macro bug! Use 'pio pkg update' from PIO Core Cli to upgrade!

@@ -36,8 +36,9 @@
 //#define SDA_PIN 22 // WROVER-E
 //#define SCL_PIN 23 // WROVER-E
 
-#define SDA_PIN 19 // S3
-#define SCL_PIN 20 // S3
+#define SDA_PIN 26 // WROVER-E
+#define SCL_PIN 14 // WROVER-E
+
 #define LCD_I2CADDR      0x3c // 128x64 OLED display I2C address
 
 #define IOEXP_PIN        0x99 // base for pins on main IO expander
@@ -72,23 +73,17 @@
   extern unsigned char PIN_IOEXP_INT;
 
 
-//  #define E0_PIN_BUTTON_1      26 // button 1 - WROVER-E
-//  #define E0_PIN_BUTTON_2      15 // button 2 - WROVER-E
-//  #define E0_PIN_BUTTON_3      33 // button 3 - WROVER-E
+  #define E0_PIN_BUTTON_1      22 // button 1 - WROVER-E
+  #define E0_PIN_BUTTON_2      23 // button 2 - WROVER-E
+  #define E0_PIN_BUTTON_3      15  // button 3 - WROVER-E
 
-  #define E0_PIN_BUTTON_1      12 // button 1 - S3
-  #define E0_PIN_BUTTON_2      13 // button 2 - S3
-  #define E0_PIN_BUTTON_3      14 // button 3 - S3
   #define E0_PIN_RFRX          255
   #define E0_PIN_RFTX          255
   #define E0_PIN_BOOST         255 // special HW needed
   #define E0_PIN_BOOST_EN      255 // special HW needed
   #define E0_PIN_LATCH_COM     255 // not needed for ESP32
-//  #define E0_PIN_SENSOR1       34 // sensor 1 - WROVER-E
-//  #define E0_PIN_SENSOR2       35 // sensor 2  - WROVER-E
-  
-  #define E0_PIN_SENSOR1       4 // sensor 1 - S3
-  #define E0_PIN_SENSOR2       5 // sensor 2  - S3
+  #define E0_PIN_SENSOR1       34 // sensor 1 - WROVER-E
+  #define E0_PIN_SENSOR2       35 // sensor 2  - WROVER-E
   #define E0_PIN_IOEXP_INT     255 // not needed for ESP32
  
   #define PIN_ETHER_CS         255 // ENC28J60 CS (chip select pin) is 16 on OS 3.2.
@@ -96,15 +91,12 @@
   #define USE_IOEXP_SR 0 // use Shift-register as station setting - uncomment this to use built-in gpio style, default 0
   
   // default
-//  #define ON_BOARD_GPIN_LIST     {21,19,18,5,255,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - WROVER-E
-  #define ON_BOARD_GPIN_LIST     {6,7,15,16,17,18,8,3} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - S3
-//  #define ON_BOARD_GPIN_LIST     {6,7,15,16,255,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - S3
+  //#define ON_BOARD_GPIN_LIST     {21,19,18,5,255,255,255,255} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - WROVER-E
+  #define ON_BOARD_GPIN_LIST     {33,32,13,12,21,19,18,5} //  ESP32 on board gpins to be usead as sections, 255 - pin not defined - WROVER-E
   #define PIN_FREE_LIST     {} // no free GPIO pin at the moment
 
   // if set to a real ADC pin, than it means the board has current sensor capabilities
-//  #define PIN_CURR_SENSE      39 // WROVER-E
-
-  #define PIN_CURR_SENSE      10 // S3
+  #define PIN_CURR_SENSE      39 // WROVER-E
   
   #define STATION_LOGIC 1 // Zone output logic for relays - 1 => HIGH in ON, 0 => LOW is ON - v1pr board: 1
 
@@ -120,17 +112,11 @@
 
   // 74HC595 shift reg
   // #define IOEXP_SR_OE_PIN // output enable pin, not used now
-//  #define IOEXP_SR_DATA_PIN 24 // WROVER-E
-//  #define IOEXP_SR_CLK_PIN 27 // WROVER-E
-
-  #define IOEXP_SR_DATA_PIN 47 // S3
-  #define IOEXP_SR_CLK_PIN 48 // S3
-  
+  #define IOEXP_SR_DATA_PIN 24 // WROVER-E
+  #define IOEXP_SR_CLK_PIN 27 // WROVER-E
   #define IOEXP_SR_LATCH_PIN 255
 
-//  #define SYS_STATUS_LED_PIN  25 // WROVER-E
-
-  #define SYS_STATUS_LED_PIN  38 // S3
+  #define SYS_STATUS_LED_PIN  25 // WROVER-E
 
   // this it not nice, should be cleaned up
  	/* Original OS30 pin defines  - native definitions, should not be here
